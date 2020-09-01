@@ -1,1 +1,5 @@
 .vscode
+log
+.ipynb_checkpoints
+*.zip
+trash
