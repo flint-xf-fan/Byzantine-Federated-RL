@@ -1,13 +1,17 @@
 # Roadmap
 
-- [x] Settings
+- [x] Problem Settings
 - [ ] Formulation
   - [ ] what objective to optimize?
     - [ ] direct PG or Q? or AC-style?
+    - [ ] how about approximating the trajectory distribution using a simpler & easier-to-analysis distribution?
+    - [ ] vanilla PG is known to have high variance (solved by introducing baselines). what happen to its variance in dsitributed setting?
   - [ ] what became invalid using martingale, for the case of RL objective?
     - [ ] convexity, lipschitzness?
     - [ ] IID samples?
-    - [ ] what is the input of the objective function to be optimized?
+  - [ ] RL settings
+    - [ ] on-policy?
+    - [ ] deterministic or stochastic?
 - [ ] Algorithm
 - [ ] Theoretical analysis
   - [ ] Sample complexity bound
