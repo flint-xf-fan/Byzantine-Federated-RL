@@ -37,11 +37,16 @@
 * [Communication-Efficient Distributed Reinforcement Learning](https://arxiv.org/pdf/1812.03239.pdf), arxiv2019: a gradient based distributed RL.
 
 ### RL using SVRG
+* [a slide on SCSG](https://lihualei71.github.io/hsieh_slides.pdf)
 * [Stochastic Variance Reduction for Policy Gradient Estimation](https://arxiv.org/abs/1710.06034), arxiv 2017: replace SGD with SVRG to improve TRPO. (**is this the first one to use SVRG in RL optimization?**)
 * [Stochastic Variance Reduction Methods for Policy Evaluation](https://arxiv.org/pdf/1702.07944.pdf), ICML2017: use SVRG for policy evaluation.
 * [focus] [Stochastic Variance-Reduced Policy Gradient](https://arxiv.org/pdf/1806.05618.pdf), ICML2018: SVRPG. *there is a statement in intro, saying: SVRG has been used in RL as an efficient technique for optimizing the per-iteration problem in Trust-Region Policy Optimization (Xu et al., 2017) or for policy evaluation (Du et al., 2017)*
+* [Policy optimization via importance sampling](https://arxiv.org/abs/1809.06098), NeurIPS2018: 8) present a surrogate objective function with a Renyi divergence (R ´ enyi et al., 1961) to reduce the variance caused ´by importance sampli
 * [An Improved Convergence Analysis of Stochastic Variance-Reduced Policy Gradient](http://proceedings.mlr.press/v115/xu20a/xu20a.pdf), UAI2020: A better proof of SVRPG
 * [SAMPLE EFFICIENT POLICY GRADIENT METHODS WITH RECURSIVE VARIANCE REDUCTION](https://arxiv.org/pdf/1909.08610.pdf), ICLR2020: SRVR-PG algorithm for non-convex objective $J(\theta)$
+
+### miscellaneous 
+* https://openreview.net/forum?id=rygRP2VYwB
 
 ## Analysis of RL
 * [Unifying PAC and Regret: Uniform PAC Bounds for Episodic Reinforcement Learning](https://arxiv.org/abs/1703.07710) NIPS2017
