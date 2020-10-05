@@ -1,24 +1,27 @@
 # Roadmap
 
 - [x] Problem Settings
+  * onpolicy policy gradient
+  * distributed / collaborative
+  * synchronous
+  * homogeneous
+  * byzantine
 - [x] Formulation
   - [x] Extend SVRG/SCSG to distributed RL
   - [x] Apply concentration to detect Byzantine gradient
-  <!-- - [ ] what objective to optimize?
-    - [ ] direct PG or Q? or AC-style?
-    - [ ] how about approximating the trajectory distribution using a simpler & easier-to-analysis distribution?
-    - [ ] vanilla PG is known to have high variance (solved by introducing baselines). what happen to its variance in dsitributed setting?
-  - [ ] what became invalid using martingale, for the case of RL objective?
-    - [ ] convexity, lipschitzness?
-    - [ ] IID samples?
-  - [ ] RL settings
-    - [ ] on-policy?
-    <!-- - [ ] deterministic or stochastic? -->
 - [ ] Algorithm
 - [ ] Theoretical analysis
+  - [ ] Converge 
   - [ ] Sample complexity bound
-  - [ ] Regret bound
 - [ ] Experiments
+  - [ ] demonstration of successful detection
+
+# TODO
+- [ ] Formulation
+  - [ ] SCSG in RL
+  - [ ] Implementation
+    - [ ] based on the official policy gradient (pytorch) implementation of spinningup.
+  - [ ] Extention to dist RL
 
 
 # Reference paper
@@ -53,3 +56,11 @@
 * [An Off-policy Policy Gradient Theorem Using Emphatic Weightings](https://arxiv.org/pdf/1811.09013.pdf), NeurIPS2018.
 * [Private Reinforcement Learning with PAC and Regret Guarantees](https://proceedings.icml.cc/static/paper_files/icml/2020/2453-Paper.pdf), ICML2020
 * [Provably Efficient Reinforcement Learning with Linear Function Approximation](https://arxiv.org/abs/1907.05388), COLT2020
+
+## code
+* https://github.com/tianbingsz/SVRG
+* https://github.com/xgfelicia/SRVRPG
+
+
+# overleaf
+https://www.overleaf.com/2114528187jhfmwbtwkxmf
