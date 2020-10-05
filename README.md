@@ -60,7 +60,7 @@
 ## code
 * https://github.com/tianbingsz/SVRG
 * https://github.com/xgfelicia/SRVRPG
-
+* https://github.com/zilunpeng/svrg_for_policy_evaluation_with_fewer_gradients
 
 # overleaf
 https://www.overleaf.com/2114528187jhfmwbtwkxmf
