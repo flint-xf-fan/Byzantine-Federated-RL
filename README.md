@@ -57,6 +57,11 @@
 * [Private Reinforcement Learning with PAC and Regret Guarantees](https://proceedings.icml.cc/static/paper_files/icml/2020/2453-Paper.pdf), ICML2020
 * [Provably Efficient Reinforcement Learning with Linear Function Approximation](https://arxiv.org/abs/1907.05388), COLT2020
 
+## survey paper
+* [Variance-Reduced Methods for Machine Learning](https://arxiv.org/abs/2010.00892)
+
+
+
 ## code
 * https://github.com/tianbingsz/SVRG
 * https://github.com/xgfelicia/SRVRPG
