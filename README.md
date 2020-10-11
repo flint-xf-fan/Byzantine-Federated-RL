@@ -26,6 +26,11 @@
 
 # Reference paper
 
+* [Toward Resilient Multi-Agent Actor-Critic Algorithms for Distributed
+Reinforcement Learning](http://publish.illinois.edu/shripadgade/files/2020/03/ACC2020.pdf)
+
+
+
 ## Byzantine Problem (the papers are listed in recommended order)
 * [Generalized Byzantine-tolerant SGD](https://arxiv.org/pdf/1802.10116.pdf), arxiv 2018: easier to follow. 
 * [Byzantine SGD](https://arxiv.org/abs/1803.08917), NeurIPS2018: Distributed SGD optimization under Byzantine settings, for convex optimization
