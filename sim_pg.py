@@ -15,7 +15,7 @@ def mlp(sizes, activation=nn.Tanh, output_activation=nn.Identity):
     return nn.Sequential(*layers)
 
 def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2, 
-          epochs=50, batch_size=5000, render=False):
+          epochs=50, batch_size=5000, render=False, device=None):
 
     # make environment, check spaces, get obs / act dims
     env = gym.make(env_name)
@@ -28,10 +28,11 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
     n_acts = env.action_space.n
 
     # make core of policy network
-    logits_net = mlp(sizes=[obs_dim]+hidden_sizes+[n_acts])
+    logits_net = mlp(sizes=[obs_dim]+hidden_sizes+[n_acts]).to(device)
 
     # make function to compute action distribution
     def get_policy(obs):
+        # obs = obs.to(device)
         logits = logits_net(obs)
         return Categorical(logits=logits)
 
@@ -75,9 +76,8 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
             batch_obs.append(obs.copy())
 
             # act in the environment
-            act = get_action(torch.as_tensor(obs, dtype=torch.float32))
+            act = get_action(torch.as_tensor(obs, dtype=torch.float32).to(device))
             obs, rew, done, _ = env.step(act)
-
             # save action, reward
             batch_acts.append(act)
             ep_rews.append(rew)
@@ -93,7 +93,6 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
 
                 # reset episode-specific variables
                 obs, done, ep_rews = env.reset(), False, []
-
                 # won't render again this epoch
                 finished_rendering_this_epoch = True
 
@@ -103,9 +102,9 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
 
         # take a single policy gradient update step
         optimizer.zero_grad()
-        batch_loss = compute_loss(obs=torch.as_tensor(batch_obs, dtype=torch.float32),
-                                  act=torch.as_tensor(batch_acts, dtype=torch.int32),
-                                  weights=torch.as_tensor(batch_weights, dtype=torch.float32)
+        batch_loss = compute_loss(obs=torch.as_tensor(batch_obs, dtype=torch.float32).to(device),
+                                  act=torch.as_tensor(batch_acts, dtype=torch.int32).to(device),
+                                  weights=torch.as_tensor(batch_weights, dtype=torch.float32).to(device)
                                   )
         batch_loss.backward()
         optimizer.step()
@@ -118,11 +117,17 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
                 (i, batch_loss, np.mean(batch_rets), np.mean(batch_lens)))
 
 if __name__ == '__main__':
+
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env_name', '--env', type=str, default='CartPole-v0')
+    parser.add_argument('--env_name', '--env', type=str, default='Pong-v0')
     parser.add_argument('--render', action='store_true')
     parser.add_argument('--lr', type=float, default=1e-2)
+    parser.add_argument('--cuda', action='store_true')
     args = parser.parse_args()
     print('\nUsing simplest formulation of policy gradient.\n')
-    train(env_name=args.env_name, render=args.render, lr=args.lr)
+    if args.cuda:
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
+    train(env_name=args.env_name, render=args.render, lr=args.lr, device=device)
