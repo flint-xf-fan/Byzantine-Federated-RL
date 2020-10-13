@@ -61,7 +61,7 @@ Reinforcement Learning](http://publish.illinois.edu/shripadgade/files/2020/03/AC
 * [An Off-policy Policy Gradient Theorem Using Emphatic Weightings](https://arxiv.org/pdf/1811.09013.pdf), NeurIPS2018.
 * [Private Reinforcement Learning with PAC and Regret Guarantees](https://proceedings.icml.cc/static/paper_files/icml/2020/2453-Paper.pdf), ICML2020
 * [Provably Efficient Reinforcement Learning with Linear Function Approximation](https://arxiv.org/abs/1907.05388), COLT2020
-
+* [Optimality and Approximation with Policy Gradient Methods in Markov Decision Processes](http://proceedings.mlr.press/v125/agarwal20a.html), COLT2020
 ## survey paper
 * [Variance-Reduced Methods for Machine Learning](https://arxiv.org/abs/2010.00892)
 
