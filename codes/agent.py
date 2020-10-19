@@ -168,5 +168,6 @@ class Agent:
         val_len /= self.opts.val_size
         
         if(tb_logger is not None):
-                tb_logger.add_scalar('validate/total_rewards', np.mean(val_ret), id)
-                tb_logger.add_scalar('validate/epi_length', np.mean(val_len), id)
+            tb_logger.add_scalar('validate/total_rewards', np.mean(val_ret), id)
+            tb_logger.add_scalar('validate/epi_length', np.mean(val_len), id)
+            tb_logger.close()
