@@ -129,7 +129,7 @@ class Actor(nn.Module):
         # determine if the agent is byzantine
         if self.is_Byzantine:
             # return true gradient
-            return [item.grad + torch.rand(item.grad.shape) for item in self.parameters()], batch_loss.item(), np.mean(batch_rets), np.mean(batch_lens) 
+            return [item.grad + torch.rand(item.grad.shape,device = item.device) for item in self.parameters()], batch_loss.item(), np.mean(batch_rets), np.mean(batch_lens) 
         
         else:
             # return true gradient
