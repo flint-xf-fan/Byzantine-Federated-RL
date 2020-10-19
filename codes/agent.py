@@ -30,8 +30,8 @@ class Agent:
         self.workers = []
         for i in range(self.world_size):
             self.workers.append( Worker(
-                                    id = 0,
-                                    is_Byzantine = False,
+                                    id = i+1,
+                                    is_Byzantine = True if i < opts.num_Byzantine else False,
                                     env_name = opts.env_name,
                                     hidden_units = opts.hidden_units, 
                                     activation = opts.activation, 
