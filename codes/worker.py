@@ -1,21 +1,11 @@
 import torch
-from torch import nn
-import gym
 import numpy as np
-import torch.optim as optim
+import gym
 from gym.spaces import Discrete, Box
-from torch.distributions.categorical import Categorical
+from policy import Policy
 from utils import get_inner_model
 
-def mlp(sizes, activation=nn.Tanh, output_activation=nn.Identity):
-    # Build a feedforward neural network.
-    layers = []
-    for j in range(len(sizes)-1):
-        act = activation if j < len(sizes)-2 else output_activation
-        layers += [nn.Linear(sizes[j], sizes[j+1]), act()]
-    return nn.Sequential(*layers)
-
-class Actor(nn.Module):
+class Worker:
 
     def __init__(self,
                  id,
@@ -25,25 +15,14 @@ class Actor(nn.Module):
                  activation = 'Tanh',
                  output_activation = 'Identity'
                  ):
-        super(Actor, self).__init__()
+        super(Worker, self).__init__()
         
-        # store parameters
+        # setup
         self.id = id
         self.is_Byzantine = is_Byzantine
-        self.activation = activation
-        self.output_activation = output_activation
-        
-        if activation == 'Tanh':
-            self.activation = nn.Tanh
-        else:
-            raise NotImplementedError
-            
-        if output_activation == 'Identity':
-            self.output_activation = nn.Identity
-        else:
-            raise NotImplementedError
         
         # make environment, check spaces, get obs / act dims
+        self.env_name = env_name
         self.env = gym.make(env_name)
         assert isinstance(self.env.observation_space, Box), \
             "This example only works for envs with continuous state spaces."
@@ -55,30 +34,30 @@ class Actor(nn.Module):
         n_acts = self.env.action_space.n
         hidden_sizes = list(eval(hidden_units))
         self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
-        self.logits_net = mlp(self.sizes, self.activation, self.output_activation)
+        self.logits_net = Policy(self.sizes, activation, output_activation)
         
-        # make optimizer
-        self.optimizer = optim.Adam(self.logits_net.parameters())
-
-    def forward(self, obs, sample = True):
-        """
-        :param input: (obs) input observation
-        :return: action
-        """
-        
-        logits = self.logits_net(obs)
-        policy = Categorical(logits=logits)
-        
-        if sample:
-            action = policy.sample()
-        else:
-            action = policy.probs.argmax()
-        
-        return action.item(), policy.log_prob(action)
     
-    def load_net_param(self, param):
-        model_actor = get_inner_model(self)
+    def load_param_from_master(self, param):
+        model_actor = get_inner_model(self.logits_net)
         model_actor.load_state_dict({**model_actor.state_dict(), **param})
+    
+    def rollout(self, device, max_epi = 5000, render = False):
+        env = gym.make(self.env_name)
+        obs = env.reset()
+        done = False  
+        epi_ret = 0
+        epi_len = 0
+        for _ in range(max_epi):
+            if render:
+                env.render()
+            
+            action = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device))[0]
+            obs, rew, done, _ = env.step(action)
+            epi_len += 1
+            epi_ret += rew
+            if done:
+                break
+        return epi_ret, epi_len
     
     def train_one_epoch(self, batch_size, device):
         # make some empty lists for logging.
@@ -96,7 +75,7 @@ class Actor(nn.Module):
         while True:
 
             # act in the environment
-            act, log_prob = self(torch.as_tensor(obs, dtype=torch.float32).to(device))
+            act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device))
             obs, rew, done, _ = self.env.step(act)
             # save action_log_prob, reward
             batch_log_prob.append(log_prob)
@@ -123,14 +102,33 @@ class Actor(nn.Module):
         batch_loss = -(logp * weights).mean()
     
         # take a single policy gradient update step
-        self.optimizer.zero_grad()
+        self.logits_net.zero_grad()
         batch_loss.backward()
         
         # determine if the agent is byzantine
         if self.is_Byzantine:
-            # return true gradient
-            return [item.grad + torch.rand(item.grad.shape,device = item.device) for item in self.parameters()], batch_loss.item(), np.mean(batch_rets), np.mean(batch_lens) 
+            # return wrong gradient with noise
+            grad = [item.grad + torch.rand(item.grad.shape, device = item.device) for item in self.parameters()]
         
         else:
             # return true gradient
-            return [item.grad for item in self.parameters()], batch_loss.item(), np.mean(batch_rets), np.mean(batch_lens) 
+            grad = [item.grad for item in self.parameters()]
+        
+        # report the results to the agent for training purpose
+        return grad, batch_loss.item(), np.mean(batch_rets), np.mean(batch_lens)
+
+
+    def to(self, device):
+        self.logits_net.to(device)
+        return self
+    
+    def eval(self):
+        self.logits_net.eval()
+        return self
+        
+    def train(self):
+        self.logits_net.train()
+        return self
+    
+    def parameters(self):
+        return self.logits_net.parameters()

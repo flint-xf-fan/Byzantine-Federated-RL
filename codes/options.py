@@ -22,9 +22,9 @@ def get_options(args=None):
     parser.add_argument('--eval_only', action='store_true', 
                         help='used only if to evaluate a model')
     parser.add_argument('--no_cuda', action='store_true', help='Disable CUDA')
-    parser.add_argument('--no_saving', action='store_true', help='Disable saving checkpoints')
+    parser.add_argument('--do_saving', action='store_true', help='Enable saving checkpoints')
+    parser.add_argument('--no_tb', action='store_true', help='Disable Tensorboard logging')
     parser.add_argument('--seed', type=int, default=1, help='Random seed to use')
-    parser.add_argument('--RL_agent', default='DPG', choices = ['DPG'])
     parser.add_argument('--render', action='store_true', help='render to view game')
     
     # important parameters
@@ -54,29 +54,31 @@ def get_options(args=None):
 
 
     ### validation   
-    parser.add_argument('--val_size', type=int, default=10,
-                        help='Number of instances used for reporting validation performance')
-    parser.add_argument('--eval_batch_size', type=int, default=5,
-                        help="Batch size to use during evaluation")
+    parser.add_argument('--val_size', type=int, default=5,
+                        help='Number of episoid used for reporting validation performance')
+    parser.add_argument('--max_epi_len', type=int, default=5000)
     
-    
-    ### logs to tensorboard and screen
-    parser.add_argument('--log_dir', default='logs', help='Directory to write TensorBoard information to')
-
-    ### outputs
-    parser.add_argument('--output_dir', default='outputs', help='Directory to write output models to')
+    ### run_name for outputs
     parser.add_argument('--run_name', default='run_name', help='Name to identify the run')
-    parser.add_argument('--checkpoint_epochs', type=int, default=1,
-                        help='Save checkpoint every n epochs (default 1), 0 to save no checkpoints')
-    
+
+
+    ### end of parameters
     opts = parser.parse_args(args)
 
     opts.use_cuda = torch.cuda.is_available() and not opts.no_cuda
     opts.run_name = "{}_{}".format(opts.run_name, time.strftime("%Y%m%dT%H%M%S")) \
         if not opts.resume else opts.resume.split('/')[-2]
     opts.save_dir = os.path.join(
-        opts.output_dir,
-        "{}_{}".format(opts.RL_agent, opts.env_name),
+        'outputs',
+        '{}'.format(opts.env_name),
+        "worker{}_byzantine{}".format(opts.num_worker, opts.num_Byzantine),
         opts.run_name
-    ) if not opts.no_saving else None
+    ) if opts.do_saving else None
+    opts.log_dir = os.path.join(
+        'logs',
+        '{}'.format(opts.env_name),
+        "worker{}_byzantine{}".format(opts.num_worker, opts.num_Byzantine),
+        opts.run_name
+    ) if not opts.no_tb else None
+            
     return opts

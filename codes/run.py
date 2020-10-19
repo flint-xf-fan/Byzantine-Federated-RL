@@ -11,31 +11,31 @@ import json
 import torch
 import pprint
 import numpy as np
-from DPG import DPG
+from agent import Agent
 from options import get_options
-
-def load_agent(name):
-    agent = {
-        'DPG': DPG,
-    }.get(name, None)
-    assert agent is not None, "Currently unsupported agent: {}!".format(name)
-    return agent
+from torch.utils.tensorboard import SummaryWriter
 
 def run(opts):
 
     # Pretty print the run args
     pprint.pprint(vars(opts))
+    
+    # setup tensorboard
+    if not opts.no_tb:
+        tb_writer = SummaryWriter(opts.log_dir)
+    else:
+        tb_writer = None
 
     # Set the random seed
     torch.manual_seed(opts.seed)
     np.random.seed(opts.seed)
 
     # Optionally configure tensorboard
-    if not opts.no_saving and not os.path.exists(opts.save_dir):
+    if opts.do_saving and not os.path.exists(opts.save_dir):
         os.makedirs(opts.save_dir)
         
     # Save arguments so exact configuration can always be found
-    if not opts.no_saving:
+    if opts.do_saving:
         with open(os.path.join(opts.save_dir, "args.json"), 'w') as f:
             json.dump(vars(opts), f, indent=True)
 
@@ -43,7 +43,7 @@ def run(opts):
     opts.device = torch.device("cuda" if opts.use_cuda else "cpu")
     
     # Figure out the RL
-    agent = load_agent(opts.RL_agent)(opts)
+    agent = Agent(opts)
 
     # Load data from load_path
     assert opts.load_path is None or opts.resume is None, "Only one of load path and resume can be given"
@@ -53,7 +53,7 @@ def run(opts):
     
     # Do validation only
     if opts.eval_only:
-        agent.validate()
+        agent.validate(tb_writer)
         
     else:
         if opts.resume:
@@ -62,7 +62,7 @@ def run(opts):
             agent.opts.epoch_start = epoch_resume + 1
     
         # Starttraining here
-        agent.start_training()
+        agent.start_training(tb_writer)
             
 
 
