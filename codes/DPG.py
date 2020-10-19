@@ -17,6 +17,7 @@ class DPG:
         # figure out the master
         self.master = Actor(
                 0,
+                False,
                 opts.env_name,
                 opts.hidden_units, 
                 opts.activation, 
@@ -29,12 +30,13 @@ class DPG:
         for i in range(opts.num_worker):
             self.workers.append(Actor(
                     i + 1,
+                    True if i < opts.num_Byzantine else False,
                     opts.env_name,
                     opts.hidden_units, 
                     opts.activation, 
                     opts.output_activation
             ).to(opts.device))
-        print(f'{opts.num_worker} workers initilized.')
+        print(f'{opts.num_worker} workers initilized with {opts.num_Byzantine} of them are Byzantine.')
         
         if not opts.eval_only:
             # figure out the optimizer

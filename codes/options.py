@@ -26,7 +26,10 @@ def get_options(args=None):
     parser.add_argument('--seed', type=int, default=1, help='Random seed to use')
     parser.add_argument('--RL_agent', default='DPG', choices = ['DPG'])
     parser.add_argument('--render', action='store_true', help='render to view game')
+    
+    # important parameters
     parser.add_argument('--num_worker', type=int, default=10, help = 'number of worker node')
+    parser.add_argument('--num_Byzantine', type=int, default=2, help = 'number of worker node that is Byzantine')
     
     # logits_net net (mlp currently)
     parser.add_argument('--hidden_units', default = '32,')

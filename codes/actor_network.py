@@ -19,6 +19,7 @@ class Actor(nn.Module):
 
     def __init__(self,
                  id,
+                 is_Byzantine,
                  env_name,
                  hidden_units,
                  activation = 'Tanh',
@@ -28,6 +29,7 @@ class Actor(nn.Module):
         
         # store parameters
         self.id = id
+        self.is_Byzantine = is_Byzantine
         self.activation = activation
         self.output_activation = output_activation
         
@@ -124,5 +126,11 @@ class Actor(nn.Module):
         self.optimizer.zero_grad()
         batch_loss.backward()
         
-        # return gradient        
-        return [item.grad for item in self.parameters()], batch_loss.item(), np.mean(batch_rets), np.mean(batch_lens) 
+        # determine if the agent is byzantine
+        if self.is_Byzantine:
+            # return true gradient
+            return [item.grad + torch.rand(item.grad.shape) for item in self.parameters()], batch_loss.item(), np.mean(batch_rets), np.mean(batch_lens) 
+        
+        else:
+            # return true gradient
+            return [item.grad for item in self.parameters()], batch_loss.item(), np.mean(batch_rets), np.mean(batch_lens) 
