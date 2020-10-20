@@ -9,19 +9,22 @@
 - [x] Formulation
   - [x] Extend SVRG/SCSG to distributed RL
   - [x] Apply concentration to detect Byzantine gradient
-- [ ] Algorithm
+- [x] Algorithm
+  - [ ] almost done; some details remaining to think through
 - [ ] Theoretical analysis
-  - [ ] Converge 
+  - [ ] Convergece 
   - [ ] Sample complexity bound
 - [ ] Experiments
+  - [X] Dist SGD / Adam P.G.
+  - [ ] Dist SVRG/SCSG P.G.
   - [ ] demonstration of successful detection
+    - [ ] how to design byzantine agents, rather than random?
 
 # TODO
-- [ ] Formulation
-  - [ ] SCSG in RL
-  - [ ] Implementation
-    - [ ] based on the official policy gradient (pytorch) implementation of spinningup.
-  - [ ] Extention to dist RL
+- [ ] Complete Formulation
+- [ ] Read SVRG-PG proof
+- [ ] link with Byzantine opt proof
+- [ ] Experiments
 
 
 # Reference paper
