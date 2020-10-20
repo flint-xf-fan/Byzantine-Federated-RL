@@ -3,7 +3,7 @@ log
 .ipynb_checkpoints
 *.zip
 trash
-logs/
+logs*/
 outputs/
 others/
 .DS_Store

@@ -75,7 +75,8 @@ def get_options(args=None):
         opts.run_name
     ) if opts.do_saving else None
     opts.log_dir = os.path.join(
-        'logs',
+        # 'logs',
+        'logs_test',
         '{}'.format(opts.env_name),
         "worker{}_byzantine{}".format(opts.num_worker, opts.num_Byzantine),
         opts.run_name

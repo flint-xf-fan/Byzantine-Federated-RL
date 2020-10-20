@@ -41,6 +41,7 @@ class Agent:
         
         if not opts.eval_only:
             # figure out the optimizer
+            # self.optimizer = optim.SGD(self.master.logits_net.parameters(), lr = opts.lr_model)
             self.optimizer = optim.Adam(self.master.logits_net.parameters(), lr = opts.lr_model)
             # learning rate decay
             self.lr_scheduler = optim.lr_scheduler.LambdaLR(self.optimizer, lambda epoch: opts.lr_decay ** (epoch))
@@ -111,13 +112,19 @@ class Agent:
             batch_rets = []
             batch_lens = []
             
+            byzantine_ids = []
+
             for worker in tqdm(self.workers, desc='Worker node'):
                 
+                if worker.is_Byzantine:
+                    byzantine_ids.append(worker.id)
+
                 # distribute current parameters
                 worker.load_param_from_master(param)
                 
                 # get returned gradients and info from all agents
                 grad, loss, rets, lens = worker.train_one_epoch(opts.batch_size, opts.device)
+                
                 gradient.append(grad)
                 batch_loss.append(loss)
                 batch_rets.append(rets)
@@ -139,10 +146,23 @@ class Agent:
                 (epoch, np.mean(batch_loss), np.mean(batch_rets), np.mean(batch_lens)))
             
             # Logging to tensorboard
+            # grad w.r.t last two parameters
+            # worker_grads_0 = {('byzantine_{}'.format(idx_) if (idx_ in byzantine_ids) else 'worker_{}'.format(idx_)): (grad_[-1][0]) for idx_, grad_ in enumerate(gradient)}
+            # worker_grads_1 = {('byzantine_{}'.format(idx_) if (idx_ in byzantine_ids) else 'worker_{}'.format(idx_)): (grad_[-1][1]) for idx_, grad_ in enumerate(gradient)}
+
+            # worker_grads_1 = {'worker_{}'.format(idx_): grad_[-1][1] for idx_, grad_ in enumerate(gradient)}
+            
             if(tb_logger is not None):
-                tb_logger.add_scalar('train/batch_loss', np.mean(batch_loss), epoch)
+                # removed the loss plot, since it is less meaningful to P.G.
+                # tb_logger.add_scalar('train/batch_loss', np.mean(batch_loss), epoch)
+                # tb_logger.add_scalars('train/gradients_0', worker_grads_0, epoch)
+                # tb_logger.add_scalars('train/gradients_1', worker_grads_1, epoch)
+
                 tb_logger.add_scalar('train/total_rewards', np.mean(batch_rets), epoch)
                 tb_logger.add_scalar('train/epi_length', np.mean(batch_lens), epoch)
+
+                # for idx_, grad_ in enumerate(gra)
+
                 tb_logger.close()
             
             # do validating
