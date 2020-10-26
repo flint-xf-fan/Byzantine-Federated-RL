@@ -25,6 +25,10 @@
 - [ ] Read SVRG-PG proof
 - [ ] link with Byzantine opt proof
 - [ ] Experiments
+  - [ ] implement SCSG optimizer
+
+### Algorithm 1
+![algo-1](assets/algo-1.png)
 
 
 # Reference paper
