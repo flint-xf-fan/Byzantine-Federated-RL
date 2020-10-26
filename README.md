@@ -71,7 +71,7 @@ Reinforcement Learning](http://publish.illinois.edu/shripadgade/files/2020/03/AC
 * [Optimality and Approximation with Policy Gradient Methods in Markov Decision Processes](http://proceedings.mlr.press/v125/agarwal20a.html), COLT2020
 ## survey paper
 * [Variance-Reduced Methods for Machine Learning](https://arxiv.org/abs/2010.00892)
-
+* [Where Did My Optimum Go?: An Empirical Analysis of Gradient Descent Optimization in Policy Gradient Methods](https://arxiv.org/abs/1810.02525)
 
 
 ## code
