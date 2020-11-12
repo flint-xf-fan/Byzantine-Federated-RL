@@ -6,6 +6,18 @@ import numpy as np
 from worker import Worker
 from utils import torch_load_cpu, get_inner_model
 
+class Memory:
+    def __init__(self):
+        self.actions = []
+        self.states = []
+        self.logprobs = []
+    
+    def clear_memory(self):
+        del self.actions[:]
+        del self.states[:]
+        del self.logprobs[:]
+        
+
 class Agent:
     
     def __init__(self, opts):
@@ -19,6 +31,16 @@ class Agent:
         # figure out the master
         self.master = Worker(
                 id = 0,
+                is_Byzantine = False,
+                env_name = opts.env_name,
+                hidden_units = opts.hidden_units, 
+                activation = opts.activation, 
+                output_activation = opts.output_activation
+        ).to(opts.device)
+        
+        # figure out a copy of the master node for importance sampling purpose
+        self.old_master = Worker(
+                id = -1,
                 is_Byzantine = False,
                 env_name = opts.env_name,
                 hidden_units = opts.hidden_units, 
@@ -41,8 +63,8 @@ class Agent:
         
         if not opts.eval_only:
             # figure out the optimizer
-            # self.optimizer = optim.SGD(self.master.logits_net.parameters(), lr = opts.lr_model)
-            self.optimizer = optim.Adam(self.master.logits_net.parameters(), lr = opts.lr_model)
+            self.optimizer = optim.SGD(self.master.logits_net.parameters(), lr = opts.lr_model)
+#            self.optimizer = optim.Adam(self.master.logits_net.parameters(), lr = opts.lr_model)
             # learning rate decay
             self.lr_scheduler = optim.lr_scheduler.LambdaLR(self.optimizer, lambda epoch: opts.lr_decay ** (epoch))
         
@@ -129,18 +151,63 @@ class Agent:
                 batch_loss.append(loss)
                 batch_rets.append(rets)
                 batch_lens.append(lens)
-                
+       
+            # make the old policy as a copy of the master node
+            self.old_master.load_param_from_master(param)
             
-            # calculate new gradient in master node
-            self.optimizer.zero_grad()
-            
-            for idx,item in enumerate(self.master.parameters()):
+            # aggregate gradients
+            mu = []
+            for idx,item in enumerate(self.old_master.parameters()):
                 grad_item = []
                 for i in range(self.world_size):
                      grad_item.append(gradient[i][idx])
-                item.grad = torch.stack(grad_item).mean(0)
+                mu.append(torch.stack(grad_item).mean(0))
         
-            self.optimizer.step()
+            # for n=1 to Nt ~ Geom(B/B+1) do grad update
+#            b = 
+#            for n in tqdm(range(np.random.geometric(p=opts.batch_size/(opts.batch_size + b))), desc = 'Master node'):
+            for n in tqdm(range(3), desc = 'Master node'):
+               
+                # calculate new gradient in master node
+                self.optimizer.zero_grad()
+            
+                # sample one trajectory using the old policy (\theta_0) of master node
+                weights, old_logp, batch_rets, batch_lens, batch_states, batch_actions = self.old_master.collect_experience_for_training(opts.batch_size, 
+                                                                                                                             opts.device, 
+                                                                                                                             record = True)
+            
+                # calculate gradient for the old policy (\theta_0)
+                loss_old = -(old_logp * weights).mean()
+                self.old_master.logits_net.zero_grad()
+                loss_old.backward()
+                grad_old = [item.grad for item in self.old_master.parameters()]
+                
+                # get the new log_p with the latest policy (\theta_n) but fixing the actions to be the same as the sampled trajectory
+                new_logp = []
+                for idx, obs in enumerate(batch_states):
+                    # act in the environment with the fixed action
+                    _, new_log_prob = self.master.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(opts.device), 
+                                                                 fixed_action = batch_actions[idx])
+                    # store in the old_logp
+                    new_logp.append(new_log_prob)
+                new_logp = torch.stack(new_logp)
+                
+                # calculate gradient for the latest policy (\theta_n)
+                loss = -(new_logp * weights).mean()
+                self.master.logits_net.zero_grad()
+                loss.backward()
+                
+                # Finding the ratio (pi_theta / pi_theta__old):
+                ratios = torch.exp(new_logp.detach().sum() - old_logp.detach().sum())
+                
+                # adjust and set the gradient for latest policy (\theta_n)
+                for idx,item in enumerate(self.master.parameters()):
+                    item.grad = item.grad - ratios * grad_old[idx] + mu[idx]
+                    
+            
+                # take a gradient step
+                self.optimizer.step()
+            
             
             print('\nepoch: %3d \t loss: %.3f \t return: %.3f \t ep_len: %.3f'%
                 (epoch, np.mean(batch_loss), np.mean(batch_rets), np.mean(batch_lens)))

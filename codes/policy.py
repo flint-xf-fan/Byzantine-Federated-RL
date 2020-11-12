@@ -5,7 +5,7 @@ Created on Mon Oct 19 18:26:40 2020
 
 @author: yiningma
 """
-
+import torch
 import torch.nn as nn
 from torch.distributions.categorical import Categorical
 
@@ -43,17 +43,25 @@ class Policy(nn.Module):
         self.sizes = sizes
         self.logits_net = mlp(self.sizes, self.activation, self.output_activation)
     
-    def forward(self, obs, sample = True):
+    def forward(self, obs, sample = True, fixed_action = None):
         """
         :param input: (obs) input observation
         :return: action
         """
         
+        # forward pass the policy net
         logits = self.logits_net(obs)
+        
+        # get the policy dist
         policy = Categorical(logits=logits)
         
-        if sample:
+        # take the pre-set action
+        if fixed_action is not None:
+            action = torch.tensor(fixed_action, device = obs.device)
+        # sample an action
+        elif sample:
             action = policy.sample()
+        # take greedy action
         else:
             action = policy.probs.argmax()
         

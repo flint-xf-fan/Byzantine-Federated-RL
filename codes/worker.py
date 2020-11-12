@@ -59,7 +59,7 @@ class Worker:
                 break
         return epi_ret, epi_len
     
-    def train_one_epoch(self, batch_size, device):
+    def collect_experience_for_training(self, batch_size, device, record = False):
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
         batch_rets = []         # for measuring episode returns
@@ -70,16 +70,26 @@ class Worker:
         obs = self.env.reset()  # first obs comes from starting distribution
         done = False            # signal from environment that episode is over
         ep_rews = []            # list for rewards accrued throughout ep
+        
+        # make two lists for recording the trajectory
+        if record:
+            batch_states = []
+            batch_actions = []
 
         # collect experience by acting in the environment with current policy
         while True:
-
+            # save trajectory
+            if record:
+                batch_states.append(obs)
             # act in the environment
             act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device))
             obs, rew, done, _ = self.env.step(act)
             # save action_log_prob, reward
             batch_log_prob.append(log_prob)
             ep_rews.append(rew)
+            # save trajectory
+            if record:
+                batch_actions.append(act)
 
             if done:
                 # if episode is over, record info about episode
@@ -97,8 +107,25 @@ class Worker:
                 if len(batch_log_prob) > batch_size:
                     break
 
-        weights = torch.as_tensor(batch_weights, dtype = torch.float32).to(device)
-        logp = torch.stack(batch_log_prob)
+        # make torch tensor and restrict to batch_size
+        weights = torch.as_tensor(batch_weights, dtype = torch.float32).to(device)[:batch_size]
+        logp = torch.stack(batch_log_prob)[:batch_size]
+        if record:
+            batch_states = batch_states[:batch_size]
+            batch_actions = batch_actions[:batch_size]
+        
+        if record:
+            return weights, logp, batch_rets, batch_lens, batch_states, batch_actions
+        else:
+            return weights, logp, batch_rets, batch_lens
+    
+    
+    def train_one_epoch(self, batch_size, device):
+        
+        # collect experience by acting in the environment with current policy
+        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(batch_size, device)
+        
+        # calculate policy gradient loss
         batch_loss = -(logp * weights).mean()
     
         # take a single policy gradient update step
@@ -108,8 +135,10 @@ class Worker:
         # determine if the agent is byzantine
         if self.is_Byzantine:
             # return wrong gradient with noise
-            grad = [item.grad + torch.rand(item.grad.shape, device = item.device) for item in self.parameters()]
+            grad = [item.grad + (torch.rand(item.grad.shape, device = item.device) * 2. -1.) for item in self.parameters()]
+#            grad = [item.grad + torch.rand(item.grad.shape, device = item.device) for item in self.parameters()]
         
+    
         else:
             # return true gradient
             grad = [item.grad for item in self.parameters()]
