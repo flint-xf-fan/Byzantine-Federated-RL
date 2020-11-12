@@ -11,9 +11,9 @@
   - [x] Apply concentration to detect Byzantine gradient
 - [x] Algorithm
   - [ ] almost done; some details remaining to think through
-- [ ] Theoretical analysis
-  - [ ] Convergece 
-  - [ ] Sample complexity bound
+- [X] Theoretical analysis
+  - [X] Convergece 
+  - [X] Sample complexity bound
 - [ ] Experiments
   - [X] Dist SGD / Adam P.G.
   - [ ] Dist SVRG/SCSG P.G.
@@ -21,8 +21,8 @@
     - [ ] how to design byzantine agents, rather than random?
 
 # TODO
-- [ ] Complete Formulation
-- [ ] Read SVRG-PG proof
+- [X] Complete Formulation
+- [X] Read SVRG-PG proof
 - [ ] link with Byzantine opt proof
 - [ ] Experiments
   - [ ] implement SCSG optimizer
