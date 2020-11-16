@@ -12,6 +12,7 @@ class Worker:
                  is_Byzantine,
                  env_name,
                  hidden_units,
+                 gamma,
                  activation = 'Tanh',
                  output_activation = 'Identity'
                  ):
@@ -20,6 +21,7 @@ class Worker:
         # setup
         self.id = id
         self.is_Byzantine = is_Byzantine
+        self.gamma = gamma
         
         # make environment, check spaces, get obs / act dims
         self.env_name = env_name
@@ -59,7 +61,7 @@ class Worker:
                 break
         return epi_ret, epi_len
     
-    def collect_experience_for_training(self, batch_size, device, record = False):
+    def collect_experience_for_training(self, B, device, record = False):
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
         batch_rets = []         # for measuring episode returns
@@ -84,6 +86,9 @@ class Worker:
             # act in the environment
             act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device))
             obs, rew, done, _ = self.env.step(act)
+            # if self.env.unwrapped.spec.id == 'MountainCar-v0':
+            #     if obs[0] >= 0.4:
+            #         rew += 1
             # save action_log_prob, reward
             batch_log_prob.append(log_prob)
             ep_rews.append(rew)
@@ -97,22 +102,29 @@ class Worker:
                 batch_rets.append(ep_ret)
                 batch_lens.append(ep_len)
 
-                # the weight for each logprob(a|s) is R(tau)
-                batch_weights += [ep_ret] * ep_len
+                # the weight for each logprob(a_t|s_T) is sum_t^T (gamma^(t'-t) * r_t')
+                returns = []
+                R = 0
+                for r in ep_rews[::-1]:
+                    R = r + self.gamma * R
+                    returns.insert(0, R)
+                returns = torch.tensor(returns)
+                returns = (returns - returns.mean()) / (returns.std() + np.finfo(np.float32).eps.item())
+                batch_weights += returns
 
                 # reset episode-specific variables
                 obs, done, ep_rews = self.env.reset(), False, []
 
                 # end experience loop if we have enough of it
-                if len(batch_log_prob) > batch_size:
+                if len(batch_lens) >= B:
                     break
 
         # make torch tensor and restrict to batch_size
-        weights = torch.as_tensor(batch_weights, dtype = torch.float32).to(device)[:batch_size]
-        logp = torch.stack(batch_log_prob)[:batch_size]
+        weights = torch.as_tensor(batch_weights, dtype = torch.float32).to(device)
+        logp = torch.stack(batch_log_prob)
         if record:
-            batch_states = batch_states[:batch_size]
-            batch_actions = batch_actions[:batch_size]
+            batch_states = batch_states
+            batch_actions = batch_actions
         
         if record:
             return weights, logp, batch_rets, batch_lens, batch_states, batch_actions
@@ -120,10 +132,10 @@ class Worker:
             return weights, logp, batch_rets, batch_lens
     
     
-    def train_one_epoch(self, batch_size, device):
+    def train_one_epoch(self, B, device):
         
         # collect experience by acting in the environment with current policy
-        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(batch_size, device)
+        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device)
         
         # calculate policy gradient loss
         batch_loss = -(logp * weights).mean()
@@ -135,9 +147,11 @@ class Worker:
         # determine if the agent is byzantine
         if self.is_Byzantine:
             # return wrong gradient with noise
-            grad = [item.grad + (torch.rand(item.grad.shape, device = item.device) * 2. -1.) for item in self.parameters()]
-#            grad = [item.grad + torch.rand(item.grad.shape, device = item.device) for item in self.parameters()]
-        
+            grad = []
+            for item in self.parameters():
+                rnd = torch.rand(item.grad.shape, device = item.device) * (item.grad.max().data - item.grad.min().data) * 4
+                rnd2 = ((torch.rand(item.grad.shape, device = item.device) > 0.5).float() - 0.5) * 2.
+                grad.append(item.grad + rnd * rnd2 )        
     
         else:
             # return true gradient

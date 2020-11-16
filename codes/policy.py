@@ -58,7 +58,7 @@ class Policy(nn.Module):
         # take the pre-set action
         if fixed_action is not None:
             action = torch.tensor(fixed_action, device = obs.device)
-        # sample an action
+        
         elif sample:
             action = policy.sample()
         # take greedy action

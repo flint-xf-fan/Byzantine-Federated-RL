@@ -53,7 +53,7 @@ def run(opts):
     
     # Do validation only
     if opts.eval_only:
-        agent.validate(tb_writer, 0)
+        agent.start_validating(tb_writer, 0, opts.render)
         
     else:
         if opts.resume:
