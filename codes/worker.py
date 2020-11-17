@@ -106,11 +106,10 @@ class Worker:
                 returns = []
                 R = 0
                 for r in ep_rews[::-1]:
-                    r /= 100
                     R = r + self.gamma * R
                     returns.insert(0, R)
                 returns = torch.tensor(returns)
-                returns = (returns - returns.mean()) / (returns.std() + np.finfo(np.float32).eps.item())
+                returns = (returns - returns.mean()) #/ (returns.std() + np.finfo(np.float32).eps.item())
                 batch_weights += returns
 
                 # reset episode-specific variables
