@@ -10,7 +10,7 @@ import os
 import time
 import argparse
 import torch
-import numpy as np
+# import numpy as np
 
 def get_options(args=None):
     parser = argparse.ArgumentParser(
@@ -63,10 +63,10 @@ def get_options(args=None):
 
     ### Byzantine Filtering
     parser.add_argument('--with_filter', action='store_true')
-    parser.add_argument('--alpha', type=float, default=0.3)
+    parser.add_argument('--alpha', type=float, default=0.4)
     
-    parser.add_argument('--delta', type=float, default=0.5)
-    parser.add_argument('--V', type=float, default=0.1)
+    parser.add_argument('--delta', type=float, default=0.6)
+    parser.add_argument('--V', type=float, default=0.025)
 
 
 
@@ -98,11 +98,11 @@ def get_options(args=None):
         opts.run_name
     ) if not opts.no_tb else None
             
-    if opts.with_filter:
-        assert opts.delta * opts.B / (np.exp(2 * (1 - 2 * opts.delta))) <= 2 * opts.num_worker / opts.delta, \
-            print( opts.delta * opts.B / (np.exp(2 * (1 - 2 * opts.delta))), 2 * opts.num_worker / opts.delta)
-        assert 2 * opts.num_worker / opts.delta <= np.exp(opts.B/2), \
-            print(2 * opts.num_worker / opts.delta, np.exp(opts.B/2))
+    # if opts.with_filter:
+    #     assert opts.delta * opts.B / (np.exp(2 * (1 - 2 * opts.delta))) <= 2 * opts.num_worker / opts.delta, \
+    #         print( opts.delta * opts.B / (np.exp(2 * (1 - 2 * opts.delta))), 2 * opts.num_worker / opts.delta)
+    #     assert 2 * opts.num_worker / opts.delta <= np.exp(opts.B/2), \
+    #         print(2 * opts.num_worker / opts.delta, np.exp(opts.B/2))
     
     assert not (opts.no_svrg and opts.with_filter), 'donot support this currently'
     return opts

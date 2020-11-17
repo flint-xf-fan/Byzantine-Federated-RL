@@ -106,6 +106,7 @@ class Worker:
                 returns = []
                 R = 0
                 for r in ep_rews[::-1]:
+                    r /= 100
                     R = r + self.gamma * R
                     returns.insert(0, R)
                 returns = torch.tensor(returns)
@@ -149,9 +150,10 @@ class Worker:
             # return wrong gradient with noise
             grad = []
             for item in self.parameters():
-                rnd = torch.rand(item.grad.shape, device = item.device) * (item.grad.max().data - item.grad.min().data) * 4
-                rnd2 = ((torch.rand(item.grad.shape, device = item.device) > 0.5).float() - 0.5) * 2.
-                grad.append(item.grad + rnd * rnd2 )        
+                rnd = torch.rand(item.grad.shape, device = item.device) * (item.grad.max().data - item.grad.min().data) + item.grad.min().data
+                rnd2 = ((torch.rand(item.grad.shape, device = item.device) > 0.5).float())
+                # grad.append(item.grad + rnd * rnd2 )    
+                grad.append(rnd * 2 * rnd2)    
     
         else:
             # return true gradient

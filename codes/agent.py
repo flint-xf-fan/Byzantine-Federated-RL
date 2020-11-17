@@ -220,10 +220,14 @@ class Agent:
                 # avoid the scenarios that Good_set is empty or can have |Gt| < (1 − α)K.
                 if torch.sum(Good_set) < (1 - alpha) * self.world_size or torch.sum(Good_set) == 0:
                     # re-calculate vector median of the gradients
-                    k_prime = (dist < 2 * V).sum(-1) > (0.5 * self.world_size)
-                    mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
-                    # re-filter with new vector median
-                    Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 4 * V
+                    k_prime = (dist <= 2 * V).sum(-1) > (0.5 * self.world_size)
+                    
+                    if torch.sum(k_prime) > 0:
+                        mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
+                        # re-filter with new vector median
+                        Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 4 * V
+                    else:
+                        Good_set = torch.zeros(self.world_size,1).to(opts.device).bool()
             
             # else will treat all nodes as non-Byzantine nodes
             else:
@@ -288,7 +292,7 @@ class Agent:
                     
                     # adjust and set the gradient for latest policy (\theta_n)
                     for idx,item in enumerate(self.master.parameters()):
-                        item.grad = item.grad - ratios * grad_old[idx] + mu[idx] if mu else item.grad # if mu is None, use grad from master 
+                        item.grad = item.grad - ratios * grad_old[idx] + (mu[idx] if mu else 0.) # if mu is None, use grad from master 
                         grad_array += (item.grad.data.view(-1).cpu().tolist())
                 
                     # take a gradient step
@@ -327,11 +331,14 @@ class Agent:
                     
                     dist_Byzantine = dist[:opts.num_Byzantine][:,:opts.num_Byzantine]
                     dist_good = dist[opts.num_Byzantine:][:,opts.num_Byzantine:]
+                    dist_good_Byzantine = dist[:opts.num_Byzantine][:,opts.num_Byzantine:]
     
                     tb_logger.add_scalar('grad/grad_norm_Byzantine_mean', torch.mean(dist_Byzantine), step)
                     tb_logger.add_scalar('grad/grad_norm_Byzantine_max', torch.max(dist_Byzantine), step)
                     tb_logger.add_scalar('grad/grad_norm_Good_mean', torch.mean(dist_good), step)
                     tb_logger.add_scalar('grad/grad_norm_Good_max', torch.max(dist_good), step)
+                    tb_logger.add_scalar('grad/grad_norm_Good_Byzantine_mean', torch.mean(dist_good_Byzantine), step)
+                    tb_logger.add_scalar('grad/grad_norm_Good_Byzantine_max', torch.max(dist_good_Byzantine), step)
         
                     tb_logger.add_scalar('Byzantine/N_good_pred', N_good, step)
                     tb_logger.add_scalar('Byzantine/threshold', threshold, step)
