@@ -28,37 +28,41 @@ def get_options(args=None):
     parser.add_argument('--seed', type=int, default=1, help='Random seed to use')
     parser.add_argument('--render', action='store_true', help='render to view game')
     
-    # Byzantine parameters
-    parser.add_argument('--num_worker', type=int, default=5, help = 'number of worker node')
-    parser.add_argument('--num_Byzantine', type=int, default=2, help = 'number of worker node that is Byzantine')
     
-    # logits_net net (mlp currently)
-    parser.add_argument('--hidden_units', default = '8,')
-    parser.add_argument('--activation', default='Tanh')
-    parser.add_argument('--output_activation', default='Identity')
-
-    # resume and load models
-    parser.add_argument('--load_path', default = None,
-                        help='Path to load model parameters and optimizer state from')
-    parser.add_argument('--resume', default = None,
-                        help='Resume from previous checkpoint file')
-
-    ### training
-    parser.add_argument('--B', type=int, default=16,
-                        help='Number of batch per epoch for worker node during training')
-    parser.add_argument('--b', type=int, default=8,
-                        help='Number of batch per epoch for master node during training')
-    parser.add_argument('--max_epi_len', type=int, default=500)
-     
+    # training and validating
     parser.add_argument('--epoch_start', type=int, default=0,
                         help='Strat at epoch #')
     parser.add_argument('--epoch_end', type=int, default=100,
                         help='End at epoch #')
+    parser.add_argument('--val_size', type=int, default=10,
+                        help='Number of episoid used for reporting validation performance')
     parser.add_argument('--lr_model', type=float, default=1e-2, help="Set the learning rate for the actor network")
     parser.add_argument('--lr_decay', type=float, default=0.99, help='Learning rate decay per epoch')
+    parser.add_argument('--max_epi_len', type=int, default=500)
+    
+    
+    # Byzantine parameters
+    parser.add_argument('--num_worker', type=int, default=5, help = 'number of worker node')
+    parser.add_argument('--num_Byzantine', type=int, default=2, help = 'number of worker node that is Byzantine')
+    
+    
+    # policy net
+    parser.add_argument('--hidden_units', default = '8,')
+    parser.add_argument('--activation', default='Tanh')
+    parser.add_argument('--output_activation', default='Identity')
+    
+    
+    # SVRG
     parser.add_argument('--no_svrg', action='store_true', help='Disable SVRG')
+    parser.add_argument('--B', type=int, default=16,
+                        help='Number of batch per epoch for worker node during training')
+    parser.add_argument('--b', type=int, default=8,
+                        help='Number of batch per epoch for master node during training')
+    
+    
+    # REINFORCE with Baseline
     parser.add_argument('--gamma', type=float, default=0.99)
-
+    parser.add_argument('--beam_num', type=int, default=3)
 
 
     ### Byzantine Filtering
@@ -69,10 +73,12 @@ def get_options(args=None):
     parser.add_argument('--V', type=float, default=0.025)
 
 
+    # resume and load models
+    parser.add_argument('--load_path', default = None,
+                        help='Path to load model parameters and optimizer state from')
+    parser.add_argument('--resume', default = None,
+                        help='Resume from previous checkpoint file')
 
-    ### validation   
-    parser.add_argument('--val_size', type=int, default=10,
-                        help='Number of episoid used for reporting validation performance')
     
     ### run_name for outputs
     parser.add_argument('--run_name', default='run_name', help='Name to identify the run')

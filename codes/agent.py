@@ -52,6 +52,7 @@ class Agent:
                 is_Byzantine = False,
                 env_name = opts.env_name,
                 gamma = opts.gamma,
+                beam_num = opts.beam_num,
                 hidden_units = opts.hidden_units, 
                 activation = opts.activation, 
                 output_activation = opts.output_activation
@@ -63,6 +64,7 @@ class Agent:
                 is_Byzantine = False,
                 env_name = opts.env_name,
                 gamma = opts.gamma,
+                beam_num = opts.beam_num,
                 hidden_units = opts.hidden_units, 
                 activation = opts.activation, 
                 output_activation = opts.output_activation
@@ -78,6 +80,7 @@ class Agent:
                                     is_Byzantine = True if i < opts.num_Byzantine else False,
                                     env_name = opts.env_name,
                                     gamma = opts.gamma,
+                                    beam_num = opts.beam_num,
                                     hidden_units = opts.hidden_units, 
                                     activation = opts.activation, 
                                     output_activation = opts.output_activation
@@ -364,7 +367,7 @@ class Agent:
         val_len = 0.0
         
         for _ in range(self.opts.val_size):
-            epi_ret, epi_len = self.master.rollout(self.opts.device, max_epi = self.opts.max_epi_len, render = render)
+            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, max_epi = self.opts.max_epi_len, render = render)
             val_ret += epi_ret
             val_len += epi_len
         
