@@ -10,25 +10,26 @@
   - [x] Extend SVRG/SCSG to distributed RL
   - [x] Apply concentration to detect Byzantine gradient
 - [x] Algorithm
-  - [ ] almost done; some details remaining to think through
+  - [x] almost done; some details remaining to think through
 - [X] Theoretical analysis
   - [X] Convergece 
   - [X] Sample complexity bound
 - [ ] Experiments
   - [X] Dist SGD / Adam P.G.
-  - [ ] Dist SVRG/SCSG P.G.
-  - [ ] demonstration of successful detection
+  - [x] Dist SVRG/SCSG P.G.
+  - [x] demonstration of successful detection
     - [ ] how to design byzantine agents, rather than random?
 
 # TODO
 - [X] Complete Formulation
 - [X] Read SVRG-PG proof
-- [ ] link with Byzantine opt proof
+- [X] link with Byzantine opt proof
 - [ ] Experiments
-  - [ ] implement SCSG optimizer
+  - [X] implement SCSG optimizer
+  - [ ] design different byzantine attack
+  - [ ] discuss adaptive bound-related parameter
 
-### Algorithm 1
-![algo-1](assets/algo-1.png)
+
 
 
 # Reference paper
