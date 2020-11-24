@@ -61,6 +61,8 @@ Reinforcement Learning](http://publish.illinois.edu/shripadgade/files/2020/03/AC
 * [Policy optimization via importance sampling](https://arxiv.org/abs/1809.06098), NeurIPS2018: 8) present a surrogate objective function with a Renyi divergence (R ´ enyi et al., 1961) to reduce the variance caused ´by importance sampli
 * [An Improved Convergence Analysis of Stochastic Variance-Reduced Policy Gradient](http://proceedings.mlr.press/v115/xu20a/xu20a.pdf), UAI2020: A better proof of SVRPG
 * [SAMPLE EFFICIENT POLICY GRADIENT METHODS WITH RECURSIVE VARIANCE REDUCTION](https://arxiv.org/pdf/1909.08610.pdf), ICLR2020: SRVR-PG algorithm for non-convex objective $J(\theta)$
+* [An Improved Analysis of (Variance-Reduced) Policy
+Gradient and Natural Policy Gradient Methods](https://proceedings.neurips.cc/paper/2020/file/56577889b3c1cd083b6d7b32d32f99d5-Paper.pdf): analysis of VR-Natural PG for global optimal, up to some function approximation error.
 
 ### miscellaneous 
 * https://openreview.net/forum?id=rygRP2VYwB
