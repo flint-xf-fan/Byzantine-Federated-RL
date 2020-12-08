@@ -21,13 +21,27 @@
     - [ ] how to design byzantine agents, rather than random?
 
 # TODO
-- [X] Complete Formulation
+<s>- [X] Complete Formulation</s>
 - [X] Read SVRG-PG proof
 - [X] link with Byzantine opt proof
+- [ ] Theoretical analysis
+  - [ ]
 - [ ] Experiments
   - [X] implement SCSG optimizer
-  - [ ] design different byzantine attack
-  - [ ] discuss adaptive bound-related parameter
+  - [ ] Testing env
+    - [ ] cart-pole
+    - [ ] swimmer, or
+    - [ ] Half Cheetah
+  - [ ] Algo1 baselines
+    - [ ] REINFORCE, G(PO)MDP; # distributed Adam
+    - [ ] SVRPG (2018 ICML); # SCSG -> SVRG
+    - [ ] ours
+  - [ ] Algo2 exp with various number of Byzantine nodes
+  (for later)
+  - [ ] Algo2 design different byzantine attack
+  - [ ] how to handle the case when all nodes being detected as byzantine..
+  - [ ] discuss adaptive bound-related parameter - threshold paramter
+- [ ] Paper writing
 
 
 
