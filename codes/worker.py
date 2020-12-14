@@ -17,7 +17,8 @@ class Worker:
                  gamma,
                  beam_num,
                  activation = 'Tanh',
-                 output_activation = 'Identity'
+                 output_activation = 'Identity',
+                 attack_type = 'None'
                  ):
         super(Worker, self).__init__()
         
@@ -29,6 +30,7 @@ class Worker:
         # make environment, check spaces, get obs / act dims
         self.env_name = env_name
         self.env = gym.make(env_name)
+        self.attack_type = attack_type
         assert isinstance(self.env.observation_space, Box), \
             "This example only works for envs with continuous state spaces."
         assert isinstance(self.env.action_space, Discrete), \
@@ -103,8 +105,8 @@ class Worker:
                 batch_lens.append(ep_len)
                 
                 # when to do sampling
-                num_beam_start_states = math.ceil(math.log(ep_len, 2))
-                beam_start_states = sorted(list(set([(ep_len - 2**i) for i in range(2, num_beam_start_states)] + [0])))
+                num_beam_start_states = math.ceil(math.log(ep_len, 3))
+                beam_start_states = sorted(list(set([(ep_len - 3**i) for i in range(2, num_beam_start_states)] + [0])))
 	
                 # run baseline
                 baseline = []
@@ -176,10 +178,12 @@ class Worker:
             # return wrong gradient with noise
             grad = []
             for item in self.parameters():
-                rnd = torch.rand(item.grad.shape, device = item.device) * (item.grad.max().data - item.grad.min().data) + item.grad.min().data
-                rnd2 = ((torch.rand(item.grad.shape, device = item.device) > 0.5).float())
-                # grad.append(item.grad + rnd * rnd2 )    
-                grad.append(rnd * 2 * rnd2)    
+                # rnd_11 = (torch.rand(item.grad.shape, device = item.device) * 2. - 1.)
+                # rnd_o = ((torch.rand(item.grad.shape, device = item.device) > 0.5).float())
+                # grad.append(item.grad + item.grad * rnd_11 * rnd_o * 2)  
+                
+                item.grad[item.grad > item.grad.mean()] = -item.grad[item.grad > item.grad.mean()] * 2
+                grad.append(item.grad)  
     
         else:
             # return true gradient

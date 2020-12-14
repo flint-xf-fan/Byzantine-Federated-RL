@@ -55,7 +55,8 @@ class Agent:
                 beam_num = opts.beam_num,
                 hidden_units = opts.hidden_units, 
                 activation = opts.activation, 
-                output_activation = opts.output_activation
+                output_activation = opts.output_activation,
+                attack_type =  opts.attack_type
         ).to(opts.device)
         
         # figure out a copy of the master node for importance sampling purpose
@@ -67,7 +68,8 @@ class Agent:
                 beam_num = opts.beam_num,
                 hidden_units = opts.hidden_units, 
                 activation = opts.activation, 
-                output_activation = opts.output_activation
+                output_activation = opts.output_activation,
+                attack_type =  opts.attack_type
         ).to(opts.device)
         
         # figure out all the actors
@@ -83,7 +85,8 @@ class Agent:
                                     beam_num = opts.beam_num,
                                     hidden_units = opts.hidden_units, 
                                     activation = opts.activation, 
-                                    output_activation = opts.output_activation
+                                    output_activation = opts.output_activation,
+                                    attack_type =  opts.attack_type
                             ).to(opts.device))
         print(f'{opts.num_worker} workers initilized with {opts.num_Byzantine if opts.num_Byzantine >0 else "None"} of them are Byzantine.')
         
@@ -185,9 +188,9 @@ class Agent:
             if opts.with_filter:
                 
                 # calculate C, Variance Bound V, thresold, and alpha
-                C = 2 * np.log(2 * opts.num_worker / opts.delta)
-                V = opts.V
-                threshold = 2 * V * np.sqrt(C / opts.B)
+                V = 2 * np.log(2 * opts.num_worker / opts.delta)
+                sigma_square = opts.sigma_square
+                threshold = 2 * sigma_square * np.sqrt(V / opts.B)
                 alpha = opts.alpha
             
                 # flatten the gradient vectors of each worker and put them together, shape [num_worker, -1]
@@ -223,12 +226,12 @@ class Agent:
                 # avoid the scenarios that Good_set is empty or can have |Gt| < (1 − α)K.
                 if torch.sum(Good_set) < (1 - alpha) * self.world_size or torch.sum(Good_set) == 0:
                     # re-calculate vector median of the gradients
-                    k_prime = (dist <= 2 * V).sum(-1) > (0.5 * self.world_size)
+                    k_prime = (dist <= 2 * sigma_square).sum(-1) > (0.5 * self.world_size)
                     
                     if torch.sum(k_prime) > 0:
                         mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
                         # re-filter with new vector median
-                        Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 4 * V
+                        Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 4 * sigma_square
                     else:
                         Good_set = torch.zeros(self.world_size,1).to(opts.device).bool()
             
@@ -264,34 +267,33 @@ class Agent:
                     # calculate new gradient in master node
                     self.optimizer.zero_grad()
                 
-                    # sample one trajectory using the old policy (\theta_0) of master node
-                    weights, old_logp, batch_rets, batch_lens, batch_states, batch_actions = self.old_master.collect_experience_for_training(b, 
+                    # sample b trajectory using the latest policy (\theta_n) of master node
+                    weights, new_logp, batch_rets, batch_lens, batch_states, batch_actions = self.master.collect_experience_for_training(b, 
                                                                                                                                  opts.device, 
                                                                                                                                  record = True)
-                
+                    # calculate gradient for the new policy (\theta_n)
+                    loss_new = -(new_logp * weights).mean()
+                    self.master.logits_net.zero_grad()
+                    loss_new.backward()
+                    
+                    # get the old log_p with the old policy (\theta_0) but fixing the actions to be the same as the sampled trajectory
+                    old_logp = []
+                    for idx, obs in enumerate(batch_states):
+                        # act in the environment with the fixed action
+                        _, old_log_prob = self.old_master.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(opts.device), 
+                                                                     fixed_action = batch_actions[idx])
+                        # store in the old_logp
+                        old_logp.append(old_log_prob)
+                    old_logp = torch.stack(old_logp)
+                    
                     # calculate gradient for the old policy (\theta_0)
                     loss_old = -(old_logp * weights).mean()
                     self.old_master.logits_net.zero_grad()
                     loss_old.backward()
-                    grad_old = [item.grad for item in self.old_master.parameters()]
-                    
-                    # get the new log_p with the latest policy (\theta_n) but fixing the actions to be the same as the sampled trajectory
-                    new_logp = []
-                    for idx, obs in enumerate(batch_states):
-                        # act in the environment with the fixed action
-                        _, new_log_prob = self.master.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(opts.device), 
-                                                                     fixed_action = batch_actions[idx])
-                        # store in the old_logp
-                        new_logp.append(new_log_prob)
-                    new_logp = torch.stack(new_logp)
-                    
-                    # calculate gradient for the latest policy (\theta_n)
-                    loss = -(new_logp * weights).mean()
-                    self.master.logits_net.zero_grad()
-                    loss.backward()
+                    grad_old = [item.grad for item in self.old_master.parameters()]   
                     
                     # Finding the ratio (pi_theta / pi_theta__old):
-                    ratios = torch.exp(new_logp.detach().sum() - old_logp.detach().sum())
+                    ratios = torch.exp(old_logp.detach().sum() - new_logp.detach().sum())
                     
                     # adjust and set the gradient for latest policy (\theta_n)
                     for idx,item in enumerate(self.master.parameters()):
@@ -336,12 +338,14 @@ class Agent:
                     dist_good = dist[opts.num_Byzantine:][:,opts.num_Byzantine:]
                     dist_good_Byzantine = dist[:opts.num_Byzantine][:,opts.num_Byzantine:]
     
-                    tb_logger.add_scalar('grad/grad_norm_Byzantine_mean', torch.mean(dist_Byzantine), step)
-                    tb_logger.add_scalar('grad/grad_norm_Byzantine_max', torch.max(dist_Byzantine), step)
-                    tb_logger.add_scalar('grad/grad_norm_Good_mean', torch.mean(dist_good), step)
-                    tb_logger.add_scalar('grad/grad_norm_Good_max', torch.max(dist_good), step)
-                    tb_logger.add_scalar('grad/grad_norm_Good_Byzantine_mean', torch.mean(dist_good_Byzantine), step)
-                    tb_logger.add_scalar('grad/grad_norm_Good_Byzantine_max', torch.max(dist_good_Byzantine), step)
+                    tb_logger.add_scalar('grad_norm_mean/Byzantine', torch.mean(dist_Byzantine), step)
+                    tb_logger.add_scalar('grad_norm_max/Byzantine', torch.max(dist_Byzantine), step)
+                    tb_logger.add_scalar('grad_norm_mean/Good', torch.mean(dist_good), step)
+                    tb_logger.add_scalar('grad_norm_max/Good', torch.max(dist_good), step)
+                    tb_logger.add_scalar('grad_norm_mean/Between', torch.mean(dist_good_Byzantine), step)
+                    tb_logger.add_scalar('grad_norm_max/Between', torch.max(dist_good_Byzantine), step)
+                    tb_logger.add_scalar('grad_norm_mean/ALL', torch.mean(dist), step)
+                    tb_logger.add_scalar('grad_norm_max/ALL', torch.max(dist), step)
         
                     tb_logger.add_scalar('Byzantine/N_good_pred', N_good, step)
                     tb_logger.add_scalar('Byzantine/threshold', threshold, step)

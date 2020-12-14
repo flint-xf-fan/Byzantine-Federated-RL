@@ -37,17 +37,18 @@ def get_options(args=None):
     parser.add_argument('--val_size', type=int, default=10,
                         help='Number of episoid used for reporting validation performance')
     parser.add_argument('--lr_model', type=float, default=1e-2, help="Set the learning rate for the actor network")
-    parser.add_argument('--lr_decay', type=float, default=0.99, help='Learning rate decay per epoch')
+    parser.add_argument('--lr_decay', type=float, default=0.985, help='Learning rate decay per epoch')
     parser.add_argument('--max_epi_len', type=int, default=500)
     
     
     # Byzantine parameters
-    parser.add_argument('--num_worker', type=int, default=5, help = 'number of worker node')
-    parser.add_argument('--num_Byzantine', type=int, default=2, help = 'number of worker node that is Byzantine')
+    parser.add_argument('--num_worker', type=int, default=10, help = 'number of worker node')
+    parser.add_argument('--num_Byzantine', type=int, default=3, help = 'number of worker node that is Byzantine')
+    parser.add_argument('--attack_type', type=str, default='', choices = [''], help = 'the attack type of a Byzantine worker')
     
     
     # policy net
-    parser.add_argument('--hidden_units', default = '8,')
+    parser.add_argument('--hidden_units', default = '16,')
     parser.add_argument('--activation', default='Tanh')
     parser.add_argument('--output_activation', default='Identity')
     
@@ -62,15 +63,14 @@ def get_options(args=None):
     
     # REINFORCE with Baseline
     parser.add_argument('--gamma', type=float, default=0.99)
-    parser.add_argument('--beam_num', type=int, default=3)
+    parser.add_argument('--beam_num', type=int, default=2)
 
 
     ### Byzantine Filtering
     parser.add_argument('--with_filter', action='store_true')
     parser.add_argument('--alpha', type=float, default=0.4)
-    
     parser.add_argument('--delta', type=float, default=0.6)
-    parser.add_argument('--V', type=float, default=0.025)
+    parser.add_argument('--sigma_square', type=float, default=0.6)
 
 
     # resume and load models
@@ -93,14 +93,14 @@ def get_options(args=None):
     opts.save_dir = os.path.join(
         'outputs',
         '{}'.format(opts.env_name),
-        "worker{}_byzantine{}".format(opts.num_worker, opts.num_Byzantine),
+        "worker{}_byzantine{}_{}".format(opts.num_worker, opts.num_Byzantine, opts.attack_type),
         opts.run_name
     ) if opts.do_saving else None
     opts.log_dir = os.path.join(
         # 'logs',
         'logs_test',
         '{}'.format(opts.env_name),
-        "worker{}_byzantine{}".format(opts.num_worker, opts.num_Byzantine),
+        "worker{}_byzantine{}_{}".format(opts.num_worker, opts.num_Byzantine, opts.attack_type),
         opts.run_name
     ) if not opts.no_tb else None
             
