@@ -10,25 +10,40 @@
   - [x] Extend SVRG/SCSG to distributed RL
   - [x] Apply concentration to detect Byzantine gradient
 - [x] Algorithm
-  - [ ] almost done; some details remaining to think through
+  - [x] almost done; some details remaining to think through
 - [X] Theoretical analysis
   - [X] Convergece 
   - [X] Sample complexity bound
 - [ ] Experiments
   - [X] Dist SGD / Adam P.G.
-  - [ ] Dist SVRG/SCSG P.G.
-  - [ ] demonstration of successful detection
+  - [x] Dist SVRG/SCSG P.G.
+  - [x] demonstration of successful detection
     - [ ] how to design byzantine agents, rather than random?
 
 # TODO
-- [X] Complete Formulation
+<s>- [X] Complete Formulation</s>
 - [X] Read SVRG-PG proof
-- [ ] link with Byzantine opt proof
+- [X] link with Byzantine opt proof
+- [ ] Theoretical analysis
+  - [ ]
 - [ ] Experiments
-  - [ ] implement SCSG optimizer
+  - [X] implement SCSG optimizer
+  - [ ] Testing env
+    - [ ] cart-pole
+    - [ ] swimmer, or
+    - [ ] Half Cheetah
+  - [ ] Algo1 baselines
+    - [ ] REINFORCE, G(PO)MDP; # distributed Adam
+    - [ ] SVRPG (2018 ICML); # SCSG -> SVRG
+    - [ ] ours
+  - [ ] Algo2 exp with various number of Byzantine nodes
+  (for later)
+  - [ ] Algo2 design different byzantine attack
+  - [ ] how to handle the case when all nodes being detected as byzantine..
+  - [ ] discuss adaptive bound-related parameter - threshold paramter
+- [ ] Paper writing
 
-### Algorithm 1
-![algo-1](assets/algo-1.png)
+
 
 
 # Reference paper
@@ -60,6 +75,8 @@ Reinforcement Learning](http://publish.illinois.edu/shripadgade/files/2020/03/AC
 * [Policy optimization via importance sampling](https://arxiv.org/abs/1809.06098), NeurIPS2018: 8) present a surrogate objective function with a Renyi divergence (R ´ enyi et al., 1961) to reduce the variance caused ´by importance sampli
 * [An Improved Convergence Analysis of Stochastic Variance-Reduced Policy Gradient](http://proceedings.mlr.press/v115/xu20a/xu20a.pdf), UAI2020: A better proof of SVRPG
 * [SAMPLE EFFICIENT POLICY GRADIENT METHODS WITH RECURSIVE VARIANCE REDUCTION](https://arxiv.org/pdf/1909.08610.pdf), ICLR2020: SRVR-PG algorithm for non-convex objective $J(\theta)$
+* [An Improved Analysis of (Variance-Reduced) Policy
+Gradient and Natural Policy Gradient Methods](https://proceedings.neurips.cc/paper/2020/file/56577889b3c1cd083b6d7b32d32f99d5-Paper.pdf): analysis of VR-Natural PG for global optimal, up to some function approximation error.
 
 ### miscellaneous 
 * https://openreview.net/forum?id=rygRP2VYwB
