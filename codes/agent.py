@@ -52,11 +52,10 @@ class Agent:
                 is_Byzantine = False,
                 env_name = opts.env_name,
                 gamma = opts.gamma,
-                beam_num = opts.beam_num,
                 hidden_units = opts.hidden_units, 
                 activation = opts.activation, 
                 output_activation = opts.output_activation,
-                attack_type =  opts.attack_type
+                max_epi_len = opts.max_epi_len
         ).to(opts.device)
         
         # figure out a copy of the master node for importance sampling purpose
@@ -65,11 +64,10 @@ class Agent:
                 is_Byzantine = False,
                 env_name = opts.env_name,
                 gamma = opts.gamma,
-                beam_num = opts.beam_num,
                 hidden_units = opts.hidden_units, 
                 activation = opts.activation, 
                 output_activation = opts.output_activation,
-                attack_type =  opts.attack_type
+                max_epi_len = opts.max_epi_len
         ).to(opts.device)
         
         # figure out all the actors
@@ -82,20 +80,18 @@ class Agent:
                                     is_Byzantine = True if i < opts.num_Byzantine else False,
                                     env_name = opts.env_name,
                                     gamma = opts.gamma,
-                                    beam_num = opts.beam_num,
                                     hidden_units = opts.hidden_units, 
                                     activation = opts.activation, 
                                     output_activation = opts.output_activation,
-                                    attack_type =  opts.attack_type
+                                    attack_type =  opts.attack_type,
+                                    max_epi_len = opts.max_epi_len
                             ).to(opts.device))
         print(f'{opts.num_worker} workers initilized with {opts.num_Byzantine if opts.num_Byzantine >0 else "None"} of them are Byzantine.')
         
         if not opts.eval_only:
             # figure out the optimizer
             self.optimizer = optim.Adam(self.master.logits_net.parameters(), lr = opts.lr_model)
-            # learning rate decay
-            self.lr_scheduler = optim.lr_scheduler.LambdaLR(self.optimizer, lambda epoch: opts.lr_decay ** (epoch))
-        
+            print(opts.lr_model)
     
     def load(self, load_path):
         assert load_path is not None
@@ -104,17 +100,17 @@ class Agent:
         model_actor = get_inner_model(self.master.logits_net)
         model_actor.load_state_dict({**model_actor.state_dict(), **load_data.get('master', {})})
         
-        if not self.opts.eval_only:
-            # load data for optimizer
-            self.optimizer.load_state_dict(load_data['optimizer'])
-            for state in self.optimizer.state.values():
-                for k, v in state.items():
-                    if torch.is_tensor(v):
-                        state[k] = v.to(self.opts.device)
-            # load data for torch and cuda
-            torch.set_rng_state(load_data['rng_state'])
-            if self.opts.use_cuda:
-                torch.cuda.set_rng_state_all(load_data['cuda_rng_state'])
+#        if not self.opts.eval_only:
+#            # load data for optimizer
+#            self.optimizer.load_state_dict(load_data['optimizer'])
+#            for state in self.optimizer.state.values():
+#                for k, v in state.items():
+#                    if torch.is_tensor(v):
+#                        state[k] = v.to(self.opts.device)
+#            # load data for torch and cuda
+#            torch.set_rng_state(load_data['rng_state'])
+#            if self.opts.use_cuda:
+#                torch.cuda.set_rng_state_all(load_data['cuda_rng_state'])
         # done
         print(' [*] Loading data from {}'.format(load_path))
         
@@ -147,16 +143,19 @@ class Agent:
 
         # for storing number of trajectories sampled
         step = 0
+        epoch = 0
         
         # Start the training loop
-        for epoch in range(opts.epoch_start, opts.epoch_end):
+        while step <= opts.max_trajectories:
+            # epoch for storing checkpoints of model
+            epoch += 1
+            
             # Turn model into training mode
             print('\n\n')
-            print("|",format(f" Training epoch {epoch} ","*^60"),"|")
+            print("|",format(f" Training step {step} ","*^60"),"|")
             self.train()
             
             # setup lr_scheduler
-            self.lr_scheduler.step(epoch)
             print("Training with lr={:.3e} for run {}".format(self.optimizer.param_groups[0]['lr'], opts.run_name) , flush=True)
             
             # some emplty list for training and logging purpose
@@ -173,7 +172,12 @@ class Agent:
                 worker.load_param_from_master(param)
                 
                 # get returned gradients and info from all agents
-                grad, loss, rets, lens = worker.train_one_epoch(opts.B, opts.device)
+                if opts.scsg:
+                    Batch_size = np.random.randint(opts.Bmin, opts.Bmax + 1)
+                else:
+                    Batch_size = opts.B
+                    
+                grad, loss, rets, lens = worker.train_one_epoch(Batch_size, opts.device)
                 
                 # store all values
                 gradient.append(grad)
@@ -190,7 +194,7 @@ class Agent:
                 # calculate C, Variance Bound V, thresold, and alpha
                 V = 2 * np.log(2 * opts.num_worker / opts.delta)
                 sigma_square = opts.sigma_square
-                threshold = 2 * sigma_square * np.sqrt(V / opts.B)
+                threshold = 2 * sigma_square * np.sqrt(V / Batch_size)
                 alpha = opts.alpha
             
                 # flatten the gradient vectors of each worker and put them together, shape [num_worker, -1]
@@ -257,11 +261,17 @@ class Agent:
             # perform gradient update in master node
             grad_array = [] # store gradients for logging
             # with svrg or graident descent
-            if not opts.no_svrg:
-                # for n=1 to Nt ~ Geom(B/B+b) do grad update
-                B = opts.B
-                b = opts.b
-                N_t = np.random.geometric(p= 1 - B/(B + b))
+            if opts.scsg or opts.svrg:
+                
+                if opts.scsg:
+                    # for n=1 to Nt ~ Geom(B/B+b) do grad update
+                    b = opts.b
+                    N_t = np.random.geometric(p= 1 - Batch_size/(Batch_size + b))
+                    
+                elif opts.svrg:
+                    b = opts.b
+                    N_t = opts.N
+                    
                 for n in tqdm(range(N_t), desc = 'Master node'):
                    
                     # calculate new gradient in master node
@@ -276,36 +286,41 @@ class Agent:
                     self.master.logits_net.zero_grad()
                     loss_new.backward()
                     
-                    # get the old log_p with the old policy (\theta_0) but fixing the actions to be the same as the sampled trajectory
-                    old_logp = []
-                    for idx, obs in enumerate(batch_states):
-                        # act in the environment with the fixed action
-                        _, old_log_prob = self.old_master.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(opts.device), 
-                                                                     fixed_action = batch_actions[idx])
-                        # store in the old_logp
-                        old_logp.append(old_log_prob)
-                    old_logp = torch.stack(old_logp)
-                    
-                    # calculate gradient for the old policy (\theta_0)
-                    loss_old = -(old_logp * weights).mean()
-                    self.old_master.logits_net.zero_grad()
-                    loss_old.backward()
-                    grad_old = [item.grad for item in self.old_master.parameters()]   
-                    
-                    # Finding the ratio (pi_theta / pi_theta__old):
-                    ratios = torch.exp(old_logp.detach().sum() - new_logp.detach().sum())
-                    
-                    # adjust and set the gradient for latest policy (\theta_n)
-                    for idx,item in enumerate(self.master.parameters()):
-                        item.grad = item.grad - ratios * grad_old[idx] + (mu[idx] if mu else 0.) # if mu is None, use grad from master 
-                        grad_array += (item.grad.data.view(-1).cpu().tolist())
+                    if mu:
+                        # get the old log_p with the old policy (\theta_0) but fixing the actions to be the same as the sampled trajectory
+                        old_logp = []
+                        for idx, obs in enumerate(batch_states):
+                            # act in the environment with the fixed action
+                            _, old_log_prob = self.old_master.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(opts.device), 
+                                                                         fixed_action = batch_actions[idx])
+                            # store in the old_logp
+                            old_logp.append(old_log_prob)
+                        old_logp = torch.stack(old_logp)
+                        
+                        # calculate gradient for the old policy (\theta_0)
+                        loss_old = -(old_logp * weights).mean()
+                        self.old_master.logits_net.zero_grad()
+                        loss_old.backward()
+                        grad_old = [item.grad for item in self.old_master.parameters()]   
+                        
+                        # Finding the ratio (pi_theta / pi_theta__old):
+                        ratios = torch.exp(old_logp.detach().sum() - new_logp.detach().sum())
+                        
+                        # adjust and set the gradient for latest policy (\theta_n)
+                        for idx,item in enumerate(self.master.parameters()):
+                            item.grad = item.grad - ratios * grad_old[idx] + mu[idx]  # if mu is None, use grad from master 
+                            grad_array += (item.grad.data.view(-1).cpu().tolist())
                 
                     # take a gradient step
                     self.optimizer.step()
             else:
+                
+                b = 0
+                N_t = 0
+                
                 # perform gradient descent with mu vector
                 for idx,item in enumerate(self.master.parameters()):
-                    item.grad = item.grad + mu[idx]
+                    item.grad = mu[idx]
                     grad_array += (item.grad.data.view(-1).cpu().tolist())
             
                 # take a gradient step
@@ -314,10 +329,12 @@ class Agent:
             print('\nepoch: %3d \t loss: %.3f \t return: %.3f \t ep_len: %.3f'%
                 (epoch, np.mean(batch_loss), np.mean(batch_rets), np.mean(batch_lens)))
             
+            # current step: number of trajectories sampled
+            assert Batch_size>0
+            step += (Batch_size + b * N_t)
+            
             # Logging to tensorboard
             if(tb_logger is not None):
-                # current step: number of trajectories sampled
-                step += (B + b * N_t)
                 
                 # training log
                 tb_logger.add_scalar('train/total_rewards', np.mean(batch_rets), step)
@@ -356,7 +373,7 @@ class Agent:
                 
                 
                 # do validating
-                self.start_validating(tb_logger, step)
+                self.start_validating(tb_logger, step, render = opts.render)
             
             # save current model
             if opts.do_saving:
@@ -371,7 +388,7 @@ class Agent:
         val_len = 0.0
         
         for _ in range(self.opts.val_size):
-            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, max_epi = self.opts.max_epi_len, render = render)
+            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, render = render, sample = False)
             val_ret += epi_ret
             val_len += epi_len
         

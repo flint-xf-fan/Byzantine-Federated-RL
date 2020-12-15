@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import gym
 from gym.spaces import Discrete, Box
-from policy import Policy
+from policy import MlpPolicy, DiagonalGaussianMlpPolicy
 from utils import get_inner_model
 from copy import deepcopy
 import math
@@ -15,10 +15,10 @@ class Worker:
                  env_name,
                  hidden_units,
                  gamma,
-                 beam_num,
                  activation = 'Tanh',
                  output_activation = 'Identity',
-                 attack_type = 'None'
+                 attack_type = None,
+                 max_epi_len = 0
                  ):
         super(Worker, self).__init__()
         
@@ -26,39 +26,42 @@ class Worker:
         self.id = id
         self.is_Byzantine = is_Byzantine
         self.gamma = gamma
-        self.beam_num = beam_num
         # make environment, check spaces, get obs / act dims
         self.env_name = env_name
         self.env = gym.make(env_name)
         self.attack_type = attack_type
-        assert isinstance(self.env.observation_space, Box), \
-            "This example only works for envs with continuous state spaces."
-        assert isinstance(self.env.action_space, Discrete), \
-            "This example only works for envs with discrete action spaces."   
+        self.max_epi_len = max_epi_len
         
         # make policy network
         obs_dim = self.env.observation_space.shape[0]
-        n_acts = self.env.action_space.n
+        if isinstance(self.env.action_space, Discrete):
+            n_acts = self.env.action_space.n
+        else:
+            n_acts = self.env.action_space.shape[0]
         hidden_sizes = list(eval(hidden_units))
         self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
-        self.logits_net = Policy(self.sizes, activation, output_activation)
+        
+        if isinstance(self.env.action_space, Discrete):
+            self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
+        else:
+            self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation)
     
     def load_param_from_master(self, param):
         model_actor = get_inner_model(self.logits_net)
         model_actor.load_state_dict({**model_actor.state_dict(), **param})
     
-    def rollout(self, device, max_epi = 5000, render = False, env = None, obs = None):
+    def rollout(self, device, render = False, env = None, obs = None, sample = True):
         
         if env is None and obs is None:
             env = gym.make(self.env_name)
             obs = env.reset()
         done = False  
         ep_rew = []
-        for _ in range(max_epi):
+        for _ in range(self.max_epi_len):
             if render:
                 env.render()
             
-            action = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device))[0]
+            action = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)[0]
             obs, rew, done, _ = env.step(action)
             ep_rew.append(rew)
             if done:
@@ -74,20 +77,20 @@ class Worker:
         batch_log_prob = []     # for gradient computing
 
         # reset episode-specific variables
-        seed = np.random.randint(0, 10000)
-        self.env.seed(seed)
         obs = self.env.reset()  # first obs comes from starting distribution
         done = False            # signal from environment that episode is over
         ep_rews = []            # list for rewards accrued throughout ep
         
         # make two lists for recording the trajectory
-        batch_states = []
-        batch_actions = []
+        if record:
+            batch_states = []
+            batch_actions = []
 
         # collect experience by acting in the environment with current policy
         while True:
             # save trajectory
-            batch_states.append(obs)
+            if record:
+                batch_states.append(obs)
             # act in the environment
             act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device))
             obs, rew, done, _ = self.env.step(act)
@@ -96,48 +99,24 @@ class Worker:
             batch_log_prob.append(log_prob)
             ep_rews.append(rew)
             # save trajectory
-            batch_actions.append(act)
+            if record:
+                batch_actions.append(act)
 
-            if done:
+            if done or len(ep_rews) >= self.max_epi_len:
+                
                 # if episode is over, record info about episode
                 ep_ret, ep_len = sum(ep_rews), len(ep_rews)
                 batch_rets.append(ep_ret)
                 batch_lens.append(ep_len)
                 
-                # when to do sampling
-                num_beam_start_states = math.ceil(math.log(ep_len, 3))
-                beam_start_states = sorted(list(set([(ep_len - 3**i) for i in range(2, num_beam_start_states)] + [0])))
-	
-                # run baseline
-                baseline = []
-            	
-                # revisit the same trajectory as sampled above and get baseline value
-                self.env.seed(seed)
-                self.env.reset()
-                for i in range(ep_len):
-                    if i in beam_start_states:
-                        beam_state = beam_start_states.index(i)
-                        beam_freq = (beam_start_states[beam_state + 1] if (beam_state + 1) < len(beam_start_states) else (ep_len)) - i
-                        beams = [self.rollout(device = device, render = False, env = deepcopy(self.env), obs = obs)[-1] for _ in range(self.beam_num)]                
-                        beams_returns = []
-                        for b in beams:
-                            returns = []
-                            R = 0
-                            for r in b[::-1]:
-                                R = r + self.gamma * R
-                                returns.insert(0, R)
-                            beams_returns.append(returns)
-                        beams_returns = [sum([Gbr[baseline_step] if len(Gbr) > baseline_step else Gbr[-1] for Gbr in beams_returns]) / len(beams_returns) for baseline_step in range(beam_freq)]
-                        baseline += beams_returns
-                    obs, _, _, _ = self.env.step(batch_actions[-ep_len:][i])
-
                 # the weight for each logprob(a_t|s_T) is sum_t^T (gamma^(t'-t) * r_t')
                 returns = []
                 R = 0
                 for r in ep_rews[::-1]:
                     R = r + self.gamma * R
                     returns.insert(0, R)
-                returns = torch.tensor(returns) - torch.tensor(baseline)
+                returns = torch.tensor(returns)
+                
                 batch_weights += returns
 
                 # end experience loop if we have enough of it
@@ -145,10 +124,7 @@ class Worker:
                     break
                 
                 # reset episode-specific variables
-                seed = np.random.randint(0, 10000)
-                self.env.seed(seed)
                 obs, done, ep_rews = self.env.reset(), False, []
-
 
 
         # make torch tensor and restrict to batch_size
@@ -174,7 +150,7 @@ class Worker:
         batch_loss.backward()
         
         # determine if the agent is byzantine
-        if self.is_Byzantine:
+        if self.is_Byzantine and self.attack_type is not None:
             # return wrong gradient with noise
             grad = []
             for item in self.parameters():

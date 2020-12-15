@@ -5,9 +5,11 @@ Created on Mon Oct 19 18:26:40 2020
 
 @author: yiningma
 """
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.distributions.categorical import Categorical
+from torch.distributions import Normal
 
 def mlp(sizes, activation=nn.Tanh, output_activation=nn.Identity):
     # Build a feedforward neural network.
@@ -17,13 +19,13 @@ def mlp(sizes, activation=nn.Tanh, output_activation=nn.Identity):
         layers += [nn.Linear(sizes[j], sizes[j+1]), act()]
     return nn.Sequential(*layers)
 
-class Policy(nn.Module):
+class MlpPolicy(nn.Module):
     def __init__(self,
                  sizes,
                  activation = 'Tanh',
                  output_activation = 'Identity'):
         
-        super(Policy, self).__init__()
+        super(MlpPolicy, self).__init__()
         
         # store parameters
         self.activation = activation
@@ -67,4 +69,63 @@ class Policy(nn.Module):
         
         return action.item(), policy.log_prob(action)
         
+
+class DiagonalGaussianMlpPolicy(nn.Module):
+    def __init__(self,
+                 sizes,
+                 activation = 'Tanh',
+                 output_activation = 'Tanh'):
         
+        super(DiagonalGaussianMlpPolicy, self).__init__()
+        
+        # store parameters
+        self.activation = activation
+        self.output_activation = output_activation
+        
+        if activation == 'Tanh':
+            self.activation = nn.Tanh
+        else:
+            raise NotImplementedError
+            
+        if output_activation == 'Tanh':
+            self.output_activation = nn.Tanh
+        else:
+            raise NotImplementedError
+            
+        # make policy network
+        self.sizes = sizes
+        self.logits_net = mlp(self.sizes, self.activation, self.output_activation)
+        
+        self.sigma = nn.Parameter(torch.zeros(sizes[-1]))
+    
+    def forward(self, obs, sample = True, fixed_action = None):
+        """
+        :param input: (obs) input observation
+        :return: action
+        """
+        
+        # forward pass the policy net
+        logits = self.logits_net(obs)
+        
+        # get the mu
+        mu = logits
+        
+        # get the sigma
+        sigma = self.sigma.exp()
+        
+        # get the policy dist
+        policy = Normal(mu, sigma)
+        
+        # take the pre-set action
+        if fixed_action is not None:
+            action = torch.tensor(fixed_action, device = obs.device)
+        else:
+            if sample:
+                if np.random.rand() < 0.9:
+                    action = mu.detach()
+                else:
+                    action = policy.sample()
+            else:
+                action = mu.detach()
+        
+        return action, policy.log_prob(action).sum()

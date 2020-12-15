@@ -1,5 +1,5 @@
 import torch
-import math
+
 from torch.nn import DataParallel
 
 def torch_load_cpu(load_path):
