@@ -18,12 +18,12 @@ def get_options(args=None):
                                     )
 
     ### overall run settings
-    parser.add_argument('--env_name', '--env', type=str, default='Walker2d-v2',# choices = ['Hopper-v2', 'Swimmer-v2', 'CartPole-v1'], 
+    parser.add_argument('--env_name', '--env', type=str, default='Hopper-v2',# choices = ['Hopper-v2', 'Swimmer-v2', 'CartPole-v1'], 
                         help='env name for the game')
     parser.add_argument('--eval_only', action='store_true', 
                         help='used only if to evaluate a model')
     parser.add_argument('--no_cuda', action='store_true', help='Disable CUDA')
-    parser.add_argument('--do_saving', action='store_true', help='Enable saving checkpoints')
+    parser.add_argument('--do_saving', action='store_false', help='Enable saving checkpoints')
     parser.add_argument('--no_tb', action='store_true', help='Disable Tensorboard logging')
     parser.add_argument('--seed', type=int, default=1, help='Random seed to use')
     parser.add_argument('--render', action='store_true', help='render to view game')
@@ -35,7 +35,7 @@ def get_options(args=None):
     
     
     # Byzantine parameters
-    parser.add_argument('--num_worker', type=int, default=1, help = 'number of worker node')
+    parser.add_argument('--num_worker', type=int, default=10, help = 'number of worker node')
     parser.add_argument('--num_Byzantine', type=int, default=0, help = 'number of worker node that is Byzantine')
     parser.add_argument('--attack_type', type=str, default='', choices = [''], help = 'the attack type of a Byzantine worker')
     
@@ -48,7 +48,7 @@ def get_options(args=None):
     
     # SVRG and SCSG
     parser.add_argument('--svrg', action='store_true', help='run SVRG')
-    parser.add_argument('--scsg', action='store_true', help='run SCSG')
+    parser.add_argument('--scsg', action='store_false', help='run SCSG')
     
     parser.add_argument('--Bmin', type=int, default=12,
                         help='Number of min batch per epoch for worker node during training (SCSG)')
@@ -58,7 +58,7 @@ def get_options(args=None):
                         help='Number of batch per epoch for worker node during training (SVRG)')
     parser.add_argument('--N', type=int, default=4,
                         help='Number of batch per epoch for master node during training (SVRG)')
-    parser.add_argument('--b', type=int, default=8,
+    parser.add_argument('--b', type=int, default=4,
                         help='Number of batch per epoch for master node during training')
     
     # REINFORCE
@@ -74,7 +74,7 @@ def get_options(args=None):
     # resume and load models
     parser.add_argument('--load_path', default = None,
                         help='Path to load model parameters and optimizer state from')
-    parser.add_argument('--resume', default = None,#'C:/Users/e0408674/Desktop/Byzantine-RL/codes/outputs/CartPole-v1/worker1_byzantine0_/run_name_20201215T173710/epoch-1.pt',
+    parser.add_argument('--resume', default = None, #'C:/Users/e0408674/Desktop/Byzantine-RL/codes/outputs/CartPole-v1/worker10_byzantine0_/run_name_20201215T233536/epoch-1.pt',
                         help='Resume from previous checkpoint file')
 
     
@@ -103,12 +103,12 @@ def get_options(args=None):
     if opts.env_name == 'CartPole-v1':
         opts.max_epi_len = 500   
         opts.max_trajectories = 3000
-        opts.lr_model = 5e-3
-        opts.hidden_units = '16,'
+        opts.lr_model = 1e-3
+        opts.hidden_units = '16,16'
     else:
         opts.max_epi_len = 1000   
         opts.max_trajectories = 10000
-        opts.lr_model = 1e-3
+        opts.lr_model = 1e-4
         opts.hidden_units = '64,64,64,'
         opts.gamma = 0.995
     

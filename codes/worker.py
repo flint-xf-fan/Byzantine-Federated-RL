@@ -116,6 +116,7 @@ class Worker:
                     R = r + self.gamma * R
                     returns.insert(0, R)
                 returns = torch.tensor(returns)
+                returns = (returns - returns.mean()) / (returns.std() + 1e-5)
                 
                 batch_weights += returns
 
