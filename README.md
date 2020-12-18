@@ -21,11 +21,12 @@
     - [ ] how to design byzantine agents, rather than random?
 
 # TODO
-<s>- [X] Complete Formulation</s>
+- [X] Complete Formulation
 - [X] Read SVRG-PG proof
 - [X] link with Byzantine opt proof
-- [ ] Theoretical analysis
-  - [ ]
+  - <s> [X] Theoretical analysis</s>
+  - <s> [X] completed</s>
+  - [ ] needs someone to proof-reading
 - [ ] Experiments
   - [X] implement SCSG optimizer
   - [ ] Testing env
