@@ -6,6 +6,8 @@ import numpy as np
 from worker import Worker
 from utils import torch_load_cpu, get_inner_model
 from sklearn import metrics
+from multiprocessing import Pool
+from itertools import repeat
 
 class Memory:
     def __init__(self):
@@ -34,6 +36,19 @@ def euclidean_dist(x, y):
     dist[dist < 0] = 0
     dist = dist.sqrt()
     return dist
+
+def worker_run(worker, param, opts, Batch_size, epsilon, seed):
+    
+    # distribute current parameters
+    worker.load_param_from_master(param)
+    worker.env.seed(seed)
+    
+    # get returned gradients and info from all agents        
+    out = worker.train_one_epoch(Batch_size, opts.device, opts.do_sample_for_training, epsilon)
+    
+    # store all values
+    return out
+    
 
 
 class Agent:
@@ -91,7 +106,9 @@ class Agent:
         if not opts.eval_only:
             # figure out the optimizer
             self.optimizer = optim.Adam(self.master.logits_net.parameters(), lr = opts.lr_model)
-            print(opts.lr_model)
+            
+        
+        self.pool = Pool(self.world_size)
     
     def load(self, load_path):
         assert load_path is not None
@@ -135,6 +152,7 @@ class Agent:
     def train(self):
         # turn model to trainig mode
         self.master.train()
+        
     
     def start_training(self, tb_logger = None):
         
@@ -166,24 +184,65 @@ class Agent:
             
             # distribute current x to all workers and collect the gradient from workers
             param = get_inner_model(self.master.logits_net).state_dict()
-            for worker in tqdm(self.workers, desc='Worker node'):
+            
+            if opts.scsg:
+                Batch_size = np.random.randint(opts.Bmin, opts.Bmax + 1)
+            else:
+                Batch_size = opts.B
+        
+            seeds = np.random.randint(1,100000, self.world_size).tolist()
+            args = zip(self.workers,
+                       repeat(param),
+                       repeat(opts),
+                       repeat(Batch_size),
+                       repeat(opts.base_epsilon),
+                       seeds)
+            
+            results = self.pool.starmap(worker_run, args)
 
-                # distribute current parameters
-                worker.load_param_from_master(param)
-                
-                # get returned gradients and info from all agents
-                if opts.scsg:
-                    Batch_size = np.random.randint(opts.Bmin, opts.Bmax + 1)
-                else:
-                    Batch_size = opts.B
-                    
-                grad, loss, rets, lens = worker.train_one_epoch(Batch_size, opts.device)
-                
+            
+            for out in tqdm(results, desc='Worker node'):
+                grad, loss, rets, lens = out
+            
                 # store all values
                 gradient.append(grad)
+
                 batch_loss.append(loss)
                 batch_rets.append(rets)
                 batch_lens.append(lens)
+
+            if opts.attack_type == 'detect-attack' and opts.num_Byzantine > 0:  
+                for idx,_ in enumerate(self.master.parameters()):
+                    tmp = []
+                    for bad_worker in range(opts.num_Byzantine):
+                        tmp.append(gradient[bad_worker][idx])
+                    tmp = torch.stack(tmp)
+
+                    estimated_2V = euclidean_dist(tmp, tmp).max()
+
+                    rnd = torch.rand(tmp[0]) * 2 * estimated_2V
+
+                    for bad_worker in range(opts.num_Byzantine):
+                        gradient[bad_worker][idx] = gradient[bad_worker][idx] + rnd
+            
+#            for worker in tqdm(self.workers, desc='Worker node'):
+#
+#                # distribute current parameters
+#                worker.load_param_from_master(param)
+#                
+#                # get returned gradients and info from all agents
+#                if opts.scsg:
+#                    Batch_size = np.random.randint(opts.Bmin, opts.Bmax + 1)
+#                else:
+#                    Batch_size = opts.B
+#                    
+#                grad, loss, rets, lens = worker.train_one_epoch(Batch_size, opts.device)
+#                
+#                # store all values
+#                gradient.append(grad)
+#                batch_loss.append(loss)
+#                batch_rets.append(rets)
+#                batch_lens.append(lens)
        
             # make the old policy as a copy of the current master node
             self.old_master.load_param_from_master(param)
@@ -214,6 +273,7 @@ class Agent:
                     
                 # calculate the norm distance between each worker's gradient vector, shape [num_worker, num_worker]
                 dist = euclidean_dist(mu_vec, mu_vec)
+                print(f'dist:{torch.max(dist)}, \t threshold:{threshold}')
                 
                 # find the index of "compact" worker's gradient such that |dist <= threshold| > 0.5 * num_worker
                 mu_med_vec = None
@@ -222,7 +282,8 @@ class Agent:
                 # computes the vector median of the gradients, mu_med_vec, and
                 # filter the gradients it believes to be Byzantine and store the index of non-Byzantine graidents in Good_set
                 if torch.sum(k_prime) > 0:
-                    mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
+                    # mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
+                    mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])]
                     Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 2 * threshold
                 else:
                     Good_set = k_prime # if median vector can not be calculated, skip this step, k_prime is emplty (i.e., all False)
@@ -233,7 +294,8 @@ class Agent:
                     k_prime = (dist <= 2 * sigma_square).sum(-1) > (0.5 * self.world_size)
                     
                     if torch.sum(k_prime) > 0:
-                        mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
+                        # mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
+                        mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])]
                         # re-filter with new vector median
                         Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 4 * sigma_square
                     else:
@@ -280,7 +342,9 @@ class Agent:
                     # sample b trajectory using the latest policy (\theta_n) of master node
                     weights, new_logp, batch_rets, batch_lens, batch_states, batch_actions = self.master.collect_experience_for_training(b, 
                                                                                                                                  opts.device, 
-                                                                                                                                 record = True)
+                                                                                                                                 record = True,
+                                                                                                                                 sample = opts.do_sample_for_training,
+                                                                                                                                 epsilon = opts.base_epsilon)
                     # calculate gradient for the new policy (\theta_n)
                     loss_new = -(new_logp * weights).mean()
                     self.master.logits_net.zero_grad()
@@ -326,8 +390,8 @@ class Agent:
                 # take a gradient step
                 self.optimizer.step()    
             
-            print('\nepoch: %3d \t loss: %.3f \t return: %.3f \t ep_len: %.3f'%
-                (epoch, np.mean(batch_loss), np.mean(batch_rets), np.mean(batch_lens)))
+            print('\nepoch: %3d \t loss: %.3f \t return: %.3f \t ep_len: %.3f \t N_good: %d'%
+                (epoch, np.mean(batch_loss), np.mean(batch_rets), np.mean(batch_lens), N_good))
             
             # current step: number of trajectories sampled
             assert Batch_size>0
@@ -372,8 +436,8 @@ class Agent:
                     tb_logger.add_scalar('Byzantine/f1_score', metrics.f1_score(y_true, y_pred), step)
                 
                 
-                # do validating
-                self.start_validating(tb_logger, step, render = opts.render)
+            # do validating
+            self.start_validating(tb_logger, step, render = opts.render)
             
             # save current model
             if opts.do_saving:
@@ -402,3 +466,4 @@ class Agent:
             tb_logger.add_scalar('validate/total_rewards', np.mean(val_ret), id)
             tb_logger.add_scalar('validate/epi_length', np.mean(val_len), id)
             tb_logger.close()
+        

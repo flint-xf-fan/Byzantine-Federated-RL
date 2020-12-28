@@ -44,7 +44,10 @@ class Worker:
         if isinstance(self.env.action_space, Discrete):
             self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
         else:
-            self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation)
+            if self.env_name == 'Humanoid-v2':
+                self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation, geer = 0.4)
+            else:
+                self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation,)
     
     def load_param_from_master(self, param):
         model_actor = get_inner_model(self.logits_net)
@@ -57,19 +60,17 @@ class Worker:
             obs = env.reset()
         done = False  
         ep_rew = []
-        for _ in range(self.max_epi_len):
+        while not done:
             if render:
                 env.render()
             
             action = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)[0]
             obs, rew, done, _ = env.step(action)
             ep_rew.append(rew)
-            if done:
-                break
-            
+
         return np.sum(ep_rew), len(ep_rew), ep_rew
     
-    def collect_experience_for_training(self, B, device, record = False):
+    def collect_experience_for_training(self, B, device, record = False, sample = True, epsilon = 0.05):
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
         batch_rets = []         # for measuring episode returns
@@ -92,8 +93,13 @@ class Worker:
             if record:
                 batch_states.append(obs)
             # act in the environment
-            act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device))
-            obs, rew, done, _ = self.env.step(act)
+            if np.random.rand() < epsilon:
+                action_rnd = self.env.action_space.sample()
+            else:
+                action_rnd = None
+            
+            act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), fixed_action = action_rnd, sample = sample)
+            obs, rew, done, info = self.env.step(act)
             
             # save action_log_prob, reward
             batch_log_prob.append(log_prob)
@@ -138,10 +144,10 @@ class Worker:
             return weights, logp, batch_rets, batch_lens
     
     
-    def train_one_epoch(self, B, device):
+    def train_one_epoch(self, B, device, sample, epsilon):
         
         # collect experience by acting in the environment with current policy
-        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device)
+        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device, sample = sample, epsilon = epsilon)
         
         # calculate policy gradient loss
         batch_loss = -(logp * weights).mean()
@@ -159,8 +165,29 @@ class Worker:
                 # rnd_o = ((torch.rand(item.grad.shape, device = item.device) > 0.5).float())
                 # grad.append(item.grad + item.grad * rnd_11 * rnd_o * 2)  
                 
-                item.grad[item.grad > item.grad.mean()] = -item.grad[item.grad > item.grad.mean()] * 2
-                grad.append(item.grad)  
+                # item.grad[item.grad > item.grad.mean()] = -item.grad[item.grad > item.grad.mean()] * 2
+                # grad.append(item.grad)  
+
+                # rnd = torch.rand(item.grad.shape, device = item.device) * (item.grad.max().data - item.grad.min().data) + item.grad.min().data
+                # rnd2 = ((torch.rand(item.grad.shape, device = item.device) > 0.5).float())
+                # grad.append(item.grad + rnd * rnd2 * 5)    
+                # grad.append(rnd * 2 * rnd2)    
+
+                if self.attack_type == 'sign-flipping':
+                    grad.append( - item.grad)  
+
+                elif self.attack_type == 'zero-gradient':
+                    grad.append( 0 * item.grad)
+
+                elif self.attack_type == 'random-noise':
+                    rnd = torch.rand(item.grad.shape, device = item.device) * (item.grad.max().data - item.grad.min().data) + item.grad.min().data
+                    grad.append( item.grad + rnd)  
+                
+                elif self.attack_type == 'detect-attack':
+                    grad.append(item.grad)
+                
+                else: raise NotImplementedError()
+
     
         else:
             # return true gradient

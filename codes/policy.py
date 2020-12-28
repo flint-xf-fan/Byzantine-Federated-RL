@@ -7,6 +7,7 @@ Created on Mon Oct 19 18:26:40 2020
 """
 import numpy as np
 import torch
+import math
 import torch.nn as nn
 from torch.distributions.categorical import Categorical
 from torch.distributions import Normal
@@ -45,6 +46,14 @@ class MlpPolicy(nn.Module):
         self.sizes = sizes
         self.logits_net = mlp(self.sizes, self.activation, self.output_activation)
     
+        self.init_parameters()
+
+    def init_parameters(self):
+
+        for param in self.parameters():
+            stdv = 1. / math.sqrt(param.size(-1))
+            param.data.uniform_(-stdv, stdv)
+
     def forward(self, obs, sample = True, fixed_action = None):
         """
         :param input: (obs) input observation
@@ -74,7 +83,8 @@ class DiagonalGaussianMlpPolicy(nn.Module):
     def __init__(self,
                  sizes,
                  activation = 'Tanh',
-                 output_activation = 'Tanh'):
+                 output_activation = 'Tanh',
+                 geer = 1):
         
         super(DiagonalGaussianMlpPolicy, self).__init__()
         
@@ -95,8 +105,18 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         # make policy network
         self.sizes = sizes
         self.logits_net = mlp(self.sizes, self.activation, self.output_activation)
+        self.geer = geer
         
         self.sigma = nn.Parameter(torch.zeros(sizes[-1]))
+
+        self.init_parameters()
+
+    def init_parameters(self):
+
+        for param in self.parameters():
+            stdv = 1. / math.sqrt(param.size(-1))
+            param.data.uniform_(-stdv, stdv)
+
     
     def forward(self, obs, sample = True, fixed_action = None):
         """
@@ -105,7 +125,7 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         """
         
         # forward pass the policy net
-        logits = self.logits_net(obs)
+        logits = self.logits_net(obs) * self.geer
         
         # get the mu
         mu = logits
@@ -121,10 +141,7 @@ class DiagonalGaussianMlpPolicy(nn.Module):
             action = torch.tensor(fixed_action, device = obs.device)
         else:
             if sample:
-                if np.random.rand() < 0.9:
-                    action = mu.detach()
-                else:
-                    action = policy.sample()
+                action = policy.sample()
             else:
                 action = mu.detach()
         

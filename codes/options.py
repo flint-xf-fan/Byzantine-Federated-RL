@@ -18,7 +18,7 @@ def get_options(args=None):
                                     )
 
     ### overall run settings
-    parser.add_argument('--env_name', '--env', type=str, default='Hopper-v2',# choices = ['Hopper-v2', 'Swimmer-v2', 'CartPole-v1'], 
+    parser.add_argument('--env_name', '--env', type=str, default='Swimmer-v2',# choices = ['Hopper-v2', 'Swimmer-v2', 'CartPole-v1'], 
                         help='env name for the game')
     parser.add_argument('--eval_only', action='store_true', 
                         help='used only if to evaluate a model')
@@ -37,7 +37,7 @@ def get_options(args=None):
     # Byzantine parameters
     parser.add_argument('--num_worker', type=int, default=10, help = 'number of worker node')
     parser.add_argument('--num_Byzantine', type=int, default=0, help = 'number of worker node that is Byzantine')
-    parser.add_argument('--attack_type', type=str, default='', choices = [''], help = 'the attack type of a Byzantine worker')
+    parser.add_argument('--attack_type', type=str, default='detect-attack', choices = ['sign-flipping', 'zero-gradient', 'random-noise', 'detect-attack'], help = 'the attack type of a Byzantine worker')
     
     
     # policy net
@@ -48,27 +48,16 @@ def get_options(args=None):
     
     # SVRG and SCSG
     parser.add_argument('--svrg', action='store_true', help='run SVRG')
-    parser.add_argument('--scsg', action='store_false', help='run SCSG')
-    
-    parser.add_argument('--Bmin', type=int, default=12,
-                        help='Number of min batch per epoch for worker node during training (SCSG)')
-    parser.add_argument('--Bmax', type=int, default=20,
-                        help='Number of max batch per epoch for worker node during training (SCSG)')
-    parser.add_argument('--B', type=int, default=16,
-                        help='Number of batch per epoch for worker node during training (SVRG)')
-    parser.add_argument('--N', type=int, default=4,
-                        help='Number of batch per epoch for master node during training (SVRG)')
-    parser.add_argument('--b', type=int, default=4,
-                        help='Number of batch per epoch for master node during training')
-    
+    parser.add_argument('--scsg', action='store_true', help='run SCSG')
+
     # REINFORCE
-    parser.add_argument('--gamma', type=float, default=0.99)
+    parser.add_argument('--gamma', type=float, default=0.999)
 
     ### Byzantine Filtering
     parser.add_argument('--with_filter', action='store_true')
     parser.add_argument('--alpha', type=float, default=0.4)
     parser.add_argument('--delta', type=float, default=0.6)
-    parser.add_argument('--sigma_square', type=float, default=0.6)
+    parser.add_argument('--sigma_square', type=float, default=0.03)
 
 
     # resume and load models
@@ -102,16 +91,85 @@ def get_options(args=None):
             
     if opts.env_name == 'CartPole-v1':
         opts.max_epi_len = 500   
-        opts.max_trajectories = 3000
-        opts.lr_model = 1e-3
+        opts.max_trajectories = 2000
+        opts.lr_model = 2e-3
+        opts.do_sample_for_training = True
+        opts.base_epsilon = 0.00
         opts.hidden_units = '16,16'
-    else:
-        opts.max_epi_len = 1000   
+        opts.B = 16
+        opts.b = 4
+        opts.N = 3
+        opts.Bmin = 14
+        opts.Bmax = 18
+
+    elif opts.env_name == 'Hopper-v2':
+        opts.max_epi_len = 1000  
+        opts.max_trajectories = 30000
+        opts.lr_model = 3e-3 #2
+        opts.hidden_units = '64,64,64'
+        opts.do_sample_for_training = True
+        opts.B = 64
+        opts.b = 32
+        opts.N = 2
+        opts.Bmin = 32
+        opts.Bmax = 64
+        opts.base_epsilon = 0.0
+        opts.gamma  = 0.99
+
+        # opts.max_epi_len = 1000  
+        # opts.max_trajectories = 30000
+        # opts.lr_model = 3e-3 #2
+        # opts.hidden_units = '64,64,64'
+        # opts.do_sample_for_training = True
+        # opts.B = 64
+        # opts.b = 32
+        # opts.N = 2
+        # opts.Bmin = 32
+        # opts.Bmax = 64
+        # opts.base_epsilon = 0.0
+        # opts.gamma  = 0.995
+
+    elif opts.env_name == 'HalfCheetah-v2':
+
+        opts.max_epi_len = 1000  
         opts.max_trajectories = 10000
-        opts.lr_model = 1e-4
-        opts.hidden_units = '64,64,64,'
-        opts.gamma = 0.995
-    
+        opts.lr_model = 4e-3 # 4
+        opts.hidden_units = '64,64,64'
+        opts.do_sample_for_training = True
+        opts.B = 32
+        opts.b = 10
+        opts.N = 2
+        opts.Bmin = 24
+        opts.Bmax = 32
+        opts.base_epsilon = 0.0
+        opts.gamma  = 0.995
+
+        # opts.max_epi_len = 1000  
+        # opts.max_trajectories = 10000
+        # opts.lr_model = 3e-3 # 4
+        # opts.hidden_units = '64,64,64'
+        # opts.do_sample_for_training = True
+        # opts.B = 48
+        # opts.b = 10
+        # opts.N = 2
+        # opts.Bmin = 16
+        # opts.Bmax = 48
+        # opts.base_epsilon = 0.0
+        # opts.gamma  = 0.999
+
+        # opts.max_epi_len = 1000   
+        # opts.max_trajectories = 10000
+        # opts.lr_model = 2e-3
+        # opts.hidden_units = '64,64,64,'
+        # opts.do_sample_for_training = True
+        # opts.B = 32
+        # opts.b = 16
+        # opts.N = 3
+        # opts.Bmin = 30
+        # opts.Bmax = 34
+        # opts.base_epsilon = 0.00
+        # opts.gamma  = 0.995
+
     # if opts.with_filter:
     #     assert opts.delta * opts.B / (np.exp(2 * (1 - 2 * opts.delta))) <= 2 * opts.num_worker / opts.delta, \
     #         print( opts.delta * opts.B / (np.exp(2 * (1 - 2 * opts.delta))), 2 * opts.num_worker / opts.delta)
