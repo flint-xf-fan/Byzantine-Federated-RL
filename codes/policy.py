@@ -106,7 +106,7 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         self.sizes = sizes
         self.logits_net = mlp(self.sizes, self.activation, self.output_activation)
         self.geer = geer
-        
+
         self.sigma = nn.Parameter(torch.zeros(sizes[-1]))
 
         self.init_parameters()
@@ -117,7 +117,7 @@ class DiagonalGaussianMlpPolicy(nn.Module):
             stdv = 1. / math.sqrt(param.size(-1))
             param.data.uniform_(-stdv, stdv)
 
-    
+
     def forward(self, obs, sample = True, fixed_action = None):
         """
         :param input: (obs) input observation
@@ -142,6 +142,7 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         else:
             if sample:
                 action = policy.sample()
+                    
             else:
                 action = mu.detach()
         

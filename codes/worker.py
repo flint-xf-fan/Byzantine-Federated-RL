@@ -180,7 +180,7 @@ class Worker:
                     grad.append( 0 * item.grad)
 
                 elif self.attack_type == 'random-noise':
-                    rnd = torch.rand(item.grad.shape, device = item.device) * (item.grad.max().data - item.grad.min().data) + item.grad.min().data
+                    rnd = (torch.rand(item.grad.shape, device = item.device) * 2 - 1) * (item.grad.max().data - item.grad.min().data) 
                     grad.append( item.grad + rnd)  
                 
                 elif self.attack_type == 'detect-attack':
