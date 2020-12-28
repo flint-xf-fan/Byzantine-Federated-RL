@@ -93,10 +93,13 @@ Gradient and Natural Policy Gradient Methods](https://proceedings.neurips.cc/pap
 * [Where Did My Optimum Go?: An Empirical Analysis of Gradient Descent Optimization in Policy Gradient Methods](https://arxiv.org/abs/1810.02525)
 
 
-## code
-* https://github.com/tianbingsz/SVRG
-* https://github.com/xgfelicia/SRVRPG
-* https://github.com/zilunpeng/svrg_for_policy_evaluation_with_fewer_gradients
-
-# overleaf
-https://www.overleaf.com/2114528187jhfmwbtwkxmf
+### one agent baseline
+```python run.py --load_path=outputs/CartPole-v1/worker10_byzantine0_detect-attack/run_name_20201223T082343/epoch-1.pt --env_name CartPole-v1 --scsg --run_name Exp2-CartPole-1G0B-NoFilter --num_worker 1 --num_Byzantine 0```
+### 10 G
+```python run.py --load_path=outputs/CartPole-v1/worker10_byzantine0_detect-attack/run_name_20201223T082343/epoch-1.pt --env_name CartPole-v1 --scsg --run_name Exp2-CartPole-10G0B-NoFilter --num_worker 10 --num_Byzantine 0```
+### 10G 3B
+```python run.py --load_path=outputs/CartPole-v1/worker10_byzantine0_detect-attack/run_name_20201223T082343/epoch-1.pt --env_name CartPole-v1 --scsg --run_name Exp2-CartPole-10G3B-NoFilter-detectAttack --num_worker 10 --num_Byzantine 3 --attack_type detect-attack```
+### 10G 3B with filter
+```python run.py --load_path=outputs/CartPole-v1/worker10_byzantine0_detect-attack/run_name_20201223T082343/epoch-1.pt --env_name CartPole-v1 --scsg --run_name Exp2-CartPole-10G3B-WithFilter-detectAttack --num_worker 10 --num_Byzantine 3 --attack_type detect-attack --with_filter```
+### 7G
+```python run.py --load_path=outputs/CartPole-v1/worker10_byzantine0_detect-attack/run_name_20201223T082343/epoch-1.pt --env_name CartPole-v1 --scsg --run_name Exp2-CartPole-7G3B-NoFilter --num_worker 7 --num_Byzantine 0```
