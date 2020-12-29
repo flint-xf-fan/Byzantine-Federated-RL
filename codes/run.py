@@ -28,11 +28,6 @@ def run(opts):
     else:
         tb_writer = None
 
-    # Set the random seed
-    torch.manual_seed(opts.seed)
-    np.random.seed(opts.seed)
-    assert opts.load_path is not None or opts.multiple_run == 1
-
     # Optionally configure tensorboard
     if opts.do_saving and not os.path.exists(opts.save_dir):
         os.makedirs(opts.save_dir)
@@ -54,6 +49,9 @@ def run(opts):
     
     # Do validation only
     if opts.eval_only:
+        # Set the random seed
+        torch.manual_seed(run_id)
+        np.random.seed(run_id)
         # Load data from load_path
         if opts.load_path is not None:
             agent.load(opts.load_path)
