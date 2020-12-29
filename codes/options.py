@@ -18,7 +18,7 @@ def get_options(args=None):
                                     )
 
     ### overall run settings
-    parser.add_argument('--env_name', '--env', type=str, default='Swimmer-v2',# choices = ['Hopper-v2', 'Swimmer-v2', 'CartPole-v1'], 
+    parser.add_argument('--env_name', '--env', type=str, default='CartPole-v1',# choices = ['Hopper-v2', 'Swimmer-v2', 'CartPole-v1'], 
                         help='env name for the game')
     parser.add_argument('--eval_only', action='store_true', 
                         help='used only if to evaluate a model')
@@ -58,12 +58,13 @@ def get_options(args=None):
     parser.add_argument('--with_filter', action='store_true')
     parser.add_argument('--alpha', type=float, default=0.4)
     parser.add_argument('--delta', type=float, default=0.6)
-    parser.add_argument('--sigma', type=float, default=0.03)
+    parser.add_argument('--sigma', type=float, default=0.06)
 
 
     # load models
     parser.add_argument('--load_path', default = None, #'C:/Users/e0408674/Desktop/Byzantine-RL/codes/outputs/CartPole-v1/worker10_byzantine0_/run_name_20201215T233536/epoch-1.pt',
                         help='Path to load model parameters and optimizer state from')
+    parser.add_argument('--log_dir', default = 'logs')
     
     ### run_name for outputs
     parser.add_argument('--run_name', default='run_name', help='Name to identify the run')
@@ -81,7 +82,7 @@ def get_options(args=None):
         opts.run_name
     ) if opts.do_saving else None
     opts.log_dir = os.path.join(
-        'logs',
+        f'{opts.log_dir}',
         '{}'.format(opts.env_name),
         "worker{}_byzantine{}_{}".format(opts.num_worker, opts.num_Byzantine, opts.attack_type),
         opts.run_name

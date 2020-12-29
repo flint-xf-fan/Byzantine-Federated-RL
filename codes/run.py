@@ -12,8 +12,10 @@ import torch
 import pprint
 import numpy as np
 from agent import Agent
+from worker import Worker
 from options import get_options
 from torch.utils.tensorboard import SummaryWriter
+from utils import get_inner_model
 
 def run(opts):
 
@@ -63,11 +65,21 @@ def run(opts):
             # Set the random seed
             torch.manual_seed(run_id)
             np.random.seed(run_id)
-
-            # Load data from load_path
-            if opts.load_path is not None:
-                agent.load(opts.load_path)
-
+            
+            nn_parms_worker = Worker(
+                id = 0,
+                is_Byzantine = False,
+                env_name = opts.env_name,
+                gamma = opts.gamma,
+                hidden_units = opts.hidden_units, 
+                activation = opts.activation, 
+                output_activation = opts.output_activation,
+                max_epi_len = opts.max_epi_len
+            ).to(opts.device)
+                    
+            model_actor = get_inner_model(agent.master.logits_net)
+            model_actor.load_state_dict({**model_actor.state_dict(), **get_inner_model(nn_parms_worker.logits_net).state_dict()})
+        
             # Starttraining here
             agent.start_training(tb_writer, run_id)
             if tb_writer:

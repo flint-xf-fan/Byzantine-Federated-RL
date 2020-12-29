@@ -118,18 +118,18 @@ class Agent:
         model_actor = get_inner_model(self.master.logits_net)
         model_actor.load_state_dict({**model_actor.state_dict(), **load_data.get('master', {})})
         
-#        if not self.opts.eval_only:
-#            # load data for optimizer
-#            self.optimizer.load_state_dict(load_data['optimizer'])
-#            for state in self.optimizer.state.values():
-#                for k, v in state.items():
-#                    if torch.is_tensor(v):
-#                        state[k] = v.to(self.opts.device)
-#            # load data for torch and cuda
-#            torch.set_rng_state(load_data['rng_state'])
-#            if self.opts.use_cuda:
-#                torch.cuda.set_rng_state_all(load_data['cuda_rng_state'])
-        # done
+        if not self.opts.eval_only:
+            # load data for optimizer
+            self.optimizer.load_state_dict(load_data['optimizer'])
+            for state in self.optimizer.state.values():
+                for k, v in state.items():
+                    if torch.is_tensor(v):
+                        state[k] = v.to(self.opts.device)
+            # load data for torch and cuda
+            torch.set_rng_state(load_data['rng_state'])
+            if self.opts.use_cuda:
+                torch.cuda.set_rng_state_all(load_data['cuda_rng_state'])
+        done
         print(' [*] Loading data from {}'.format(load_path))
         
     
@@ -428,22 +428,23 @@ class Agent:
                     dist_good = dist[opts.num_Byzantine:][:,opts.num_Byzantine:]
                     dist_good_Byzantine = dist[:opts.num_Byzantine][:,opts.num_Byzantine:]
     
-                    tb_logger.add_scalar(f'grad_norm_mean/Byzantine_{run_id}', torch.mean(dist_Byzantine), step)
-                    tb_logger.add_scalar(f'grad_norm_max/Byzantine_{run_id}', torch.max(dist_Byzantine), step)
-                    tb_logger.add_scalar(f'grad_norm_mean/Good_{run_id}', torch.mean(dist_good), step)
-                    tb_logger.add_scalar(f'grad_norm_max/Good_{run_id}', torch.max(dist_good), step)
-                    tb_logger.add_scalar(f'grad_norm_mean/Between_{run_id}', torch.mean(dist_good_Byzantine), step)
-                    tb_logger.add_scalar(f'grad_norm_max/Between_{run_id}', torch.max(dist_good_Byzantine), step)
+                    if opts.num_Byzantine > 0:
+                        tb_logger.add_scalar(f'grad_norm_mean/Byzantine_{run_id}', torch.mean(dist_Byzantine), step)
+                        tb_logger.add_scalar(f'grad_norm_max/Byzantine_{run_id}', torch.max(dist_Byzantine), step)
+                        tb_logger.add_scalar(f'grad_norm_mean/Good_{run_id}', torch.mean(dist_good), step)
+                        tb_logger.add_scalar(f'grad_norm_max/Good_{run_id}', torch.max(dist_good), step)
+                        tb_logger.add_scalar(f'grad_norm_mean/Between_{run_id}', torch.mean(dist_good_Byzantine), step)
+                        tb_logger.add_scalar(f'grad_norm_max/Between_{run_id}', torch.max(dist_good_Byzantine), step)
+                  
+                        tb_logger.add_scalar(f'Byzantine/precision_{run_id}', metrics.precision_score(y_true, y_pred), step)
+                        tb_logger.add_scalar(f'Byzantine/recall_{run_id}', metrics.recall_score(y_true, y_pred), step)
+                        tb_logger.add_scalar(f'Byzantine/f1_score_{run_id}', metrics.f1_score(y_true, y_pred), step)
+                
+                    tb_logger.add_scalar(f'Byzantine/threshold_{run_id}', threshold, step)
                     tb_logger.add_scalar(f'grad_norm_mean/ALL_{run_id}', torch.mean(dist), step)
                     tb_logger.add_scalar(f'grad_norm_max/ALL_{run_id}', torch.max(dist), step)
-        
                     tb_logger.add_scalar(f'Byzantine/N_good_pred_{run_id}', N_good, step)
-                    tb_logger.add_scalar(f'Byzantine/threshold_{run_id}', threshold, step)
-                    
-                    tb_logger.add_scalar(f'Byzantine/precision_{run_id}', metrics.precision_score(y_true, y_pred), step)
-                    tb_logger.add_scalar(f'Byzantine/recall_{run_id}', metrics.recall_score(y_true, y_pred), step)
-                    tb_logger.add_scalar(f'Byzantine/f1_score_{run_id}', metrics.f1_score(y_true, y_pred), step)
-                
+                        
                 # for performance plot
                 if run_id not in self.memory.steps.keys():
                     self.memory.steps[run_id] = []
