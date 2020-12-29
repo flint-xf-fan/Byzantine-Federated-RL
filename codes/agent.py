@@ -1,4 +1,5 @@
 import os
+import io
 from tqdm import tqdm
 import torch
 import torch.optim as optim
@@ -7,18 +8,16 @@ from worker import Worker
 from utils import torch_load_cpu, get_inner_model
 from sklearn import metrics
 from multiprocessing import Pool
+from matplotlib import pyplot as plt
 from itertools import repeat
+from scipy.interpolate import Rbf
+import scipy.stats as st
 
 class Memory:
     def __init__(self):
-        self.actions = []
-        self.states = []
-        self.logprobs = []
-    
-    def clear_memory(self):
-        del self.actions[:]
-        del self.states[:]
-        del self.logprobs[:]
+        self.steps = {}
+        self.eval_values = {}
+        self.training_values = {}
 
 def euclidean_dist(x, y):
     """
@@ -109,6 +108,8 @@ class Agent:
             
         
         self.pool = Pool(self.world_size)
+        
+        self.memory = Memory()
     
     def load(self, load_path):
         assert load_path is not None
@@ -154,7 +155,7 @@ class Agent:
         self.master.train()
         
     
-    def start_training(self, tb_logger = None):
+    def start_training(self, tb_logger = None, run_id = None):
         
         # parameters of running
         opts = self.opts
@@ -170,7 +171,7 @@ class Agent:
             
             # Turn model into training mode
             print('\n\n')
-            print("|",format(f" Training step {step} ","*^60"),"|")
+            print("|",format(f" Training step {step} run_id {run_id} in {opts.seeds}","*^60"),"|")
             self.train()
             
             # setup lr_scheduler
@@ -401,14 +402,14 @@ class Agent:
             if(tb_logger is not None):
                 
                 # training log
-                tb_logger.add_scalar('train/total_rewards', np.mean(batch_rets), step)
-                tb_logger.add_scalar('train/epi_length', np.mean(batch_lens), step)
-                tb_logger.add_scalar('train/loss', np.mean(batch_loss), step)
+                tb_logger.add_scalar(f'train/total_rewards_{run_id}', np.mean(batch_rets), step)
+                tb_logger.add_scalar(f'train/epi_length_{run_id}', np.mean(batch_lens), step)
+                tb_logger.add_scalar(f'train/loss_{run_id}', np.mean(batch_loss), step)
                 # grad log
-                tb_logger.add_scalar('grad/grad', np.mean(grad_array), step)
+                tb_logger.add_scalar(f'grad/grad_{run_id}', np.mean(grad_array), step)
                 # optimizer log
-                tb_logger.add_scalar('params/lr', self.optimizer.param_groups[0]['lr'], step)
-                tb_logger.add_scalar('params/N_t', N_t, step)
+                tb_logger.add_scalar(f'params/lr_{run_id}', self.optimizer.param_groups[0]['lr'], step)
+                tb_logger.add_scalar(f'params/N_t_{run_id}', N_t, step)
                 # Byzantine filtering log
                 if opts.with_filter:
                     
@@ -419,33 +420,44 @@ class Agent:
                     dist_good = dist[opts.num_Byzantine:][:,opts.num_Byzantine:]
                     dist_good_Byzantine = dist[:opts.num_Byzantine][:,opts.num_Byzantine:]
     
-                    tb_logger.add_scalar('grad_norm_mean/Byzantine', torch.mean(dist_Byzantine), step)
-                    tb_logger.add_scalar('grad_norm_max/Byzantine', torch.max(dist_Byzantine), step)
-                    tb_logger.add_scalar('grad_norm_mean/Good', torch.mean(dist_good), step)
-                    tb_logger.add_scalar('grad_norm_max/Good', torch.max(dist_good), step)
-                    tb_logger.add_scalar('grad_norm_mean/Between', torch.mean(dist_good_Byzantine), step)
-                    tb_logger.add_scalar('grad_norm_max/Between', torch.max(dist_good_Byzantine), step)
-                    tb_logger.add_scalar('grad_norm_mean/ALL', torch.mean(dist), step)
-                    tb_logger.add_scalar('grad_norm_max/ALL', torch.max(dist), step)
+                    tb_logger.add_scalar(f'grad_norm_mean/Byzantine_{run_id}', torch.mean(dist_Byzantine), step)
+                    tb_logger.add_scalar(f'grad_norm_max/Byzantine_{run_id}', torch.max(dist_Byzantine), step)
+                    tb_logger.add_scalar(f'grad_norm_mean/Good_{run_id}', torch.mean(dist_good), step)
+                    tb_logger.add_scalar(f'grad_norm_max/Good_{run_id}', torch.max(dist_good), step)
+                    tb_logger.add_scalar(f'grad_norm_mean/Between_{run_id}', torch.mean(dist_good_Byzantine), step)
+                    tb_logger.add_scalar(f'grad_norm_max/Between_{run_id}', torch.max(dist_good_Byzantine), step)
+                    tb_logger.add_scalar(f'grad_norm_mean/ALL_{run_id}', torch.mean(dist), step)
+                    tb_logger.add_scalar(f'grad_norm_max/ALL_{run_id}', torch.max(dist), step)
         
-                    tb_logger.add_scalar('Byzantine/N_good_pred', N_good, step)
-                    tb_logger.add_scalar('Byzantine/threshold', threshold, step)
+                    tb_logger.add_scalar(f'Byzantine/N_good_pred_{run_id}', N_good, step)
+                    tb_logger.add_scalar(f'Byzantine/threshold_{run_id}', threshold, step)
                     
-                    tb_logger.add_scalar('Byzantine/precision', metrics.precision_score(y_true, y_pred), step)
-                    tb_logger.add_scalar('Byzantine/recall', metrics.recall_score(y_true, y_pred), step)
-                    tb_logger.add_scalar('Byzantine/f1_score', metrics.f1_score(y_true, y_pred), step)
+                    tb_logger.add_scalar(f'Byzantine/precision_{run_id}', metrics.precision_score(y_true, y_pred), step)
+                    tb_logger.add_scalar(f'Byzantine/recall_{run_id}', metrics.recall_score(y_true, y_pred), step)
+                    tb_logger.add_scalar(f'Byzantine/f1_score_{run_id}', metrics.f1_score(y_true, y_pred), step)
                 
+                # for performance plot
+                if run_id not in self.memory.steps.keys():
+                    self.memory.steps[run_id] = []
+                    self.memory.eval_values[run_id] = []
+                    self.memory.training_values[run_id] = []
+                
+                self.memory.steps[run_id].append(step)
+                self.memory.training_values[run_id].append(np.mean(batch_rets))
+                             
                 
             # do validating
-            self.start_validating(tb_logger, step, render = opts.render)
-            
+            eval_reward = self.start_validating(tb_logger, step, render = opts.render, run_id = run_id)
+            if(tb_logger is not None):
+                 self.memory.eval_values[run_id].append(eval_reward)
+                            
             # save current model
             if opts.do_saving:
                 self.save(epoch)
                 
     
     # validate the new model   
-    def start_validating(self,tb_logger = None, id = 0, render = False):
+    def start_validating(self,tb_logger = None, id = 0, render = False, run_id = 0):
         print('\nValidating...', flush=True)
         
         val_ret = 0.0
@@ -463,7 +475,44 @@ class Agent:
                 (id,  np.mean(val_ret), np.mean(val_len)))
         
         if(tb_logger is not None):
-            tb_logger.add_scalar('validate/total_rewards', np.mean(val_ret), id)
-            tb_logger.add_scalar('validate/epi_length', np.mean(val_len), id)
+            tb_logger.add_scalar(f'validate/total_rewards_{run_id}', np.mean(val_ret), id)
+            tb_logger.add_scalar(f'validate/epi_length_{run_id}', np.mean(val_len), id)
             tb_logger.close()
         
+        return np.mean(val_ret)
+    
+    # logging performance summary
+    
+    
+    def plot_graph(self, array):
+        plt.ioff()
+        fig = plt.figure(figsize=(8,4))
+        y = []
+        
+        for id in self.memory.steps.keys():
+             x = self.memory.steps[id]
+             y.append(Rbf(x, array[id])(np.arange(self.opts.max_trajectories)))
+        
+        mean = np.mean(y, axis=0)
+        
+        l, h = st.norm.interval(0.90, loc=np.mean(y, axis = 0), scale=st.sem(y, axis = 0))
+        
+        plt.plot(mean)
+        plt.fill_between(range(self.opts.max_trajectories), l, h, alpha = 0.5)
+        
+        axes = plt.axes()
+        axes.set_ylim([0, self.opts.max_reward])
+        
+        plt.xlabel("Number of Trajectories")
+        plt.ylabel("Reward")
+        plt.grid(True)
+        plt.tight_layout()
+        return fig
+    
+    
+    def log_performance(self, tb_logger):
+       
+        eval_img = self.plot_graph(self.memory.eval_values)
+        training_img = self.plot_graph(self.memory.training_values)
+        tb_logger.add_figure(f'validate/performance_until_{len(self.memory.steps.keys())}_runs', eval_img, len(self.memory.steps.keys()))
+        tb_logger.add_figure(f'train/performance_until_{len(self.memory.steps.keys())}_runs', training_img, len(self.memory.steps.keys()))        
