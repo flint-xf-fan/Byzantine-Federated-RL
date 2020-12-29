@@ -491,7 +491,7 @@ class Agent:
         
         for id in self.memory.steps.keys():
              x = self.memory.steps[id]
-             y.append(Rbf(x, array[id])(np.arange(self.opts.max_trajectories)))
+             y.append(Rbf(x, array[id], function = 'linear')(np.arange(self.opts.max_trajectories)))
         
         mean = np.mean(y, axis=0)
         
