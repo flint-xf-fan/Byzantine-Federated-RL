@@ -29,11 +29,16 @@ def run(opts):
     # Set the random seed
     torch.manual_seed(opts.seed)
     np.random.seed(opts.seed)
+    assert opts.load_path is not None or opts.multiple_run == 1
 
     # Optionally configure tensorboard
     if opts.do_saving and not os.path.exists(opts.save_dir):
         os.makedirs(opts.save_dir)
-        
+
+    # Configure for multiple runs    
+    assert opts.multiple_run > 0
+    opts.seeds = np.arange(opts.multiple_run).tolist()
+
     # Save arguments so exact configuration can always be found
     if opts.do_saving:
         with open(os.path.join(opts.save_dir, "args.json"), 'w') as f:
@@ -44,25 +49,29 @@ def run(opts):
     
     # Figure out the RL
     agent = Agent(opts)
-
-    # Load data from load_path
-    assert opts.load_path is None or opts.resume is None, "Only one of load path and resume can be given"
-    load_path = opts.load_path if opts.load_path is not None else opts.resume
-    if load_path is not None:
-        agent.load(load_path)
     
     # Do validation only
     if opts.eval_only:
+        # Load data from load_path
+        if opts.load_path is not None:
+            agent.load(opts.load_path)
+        
         agent.start_validating(tb_writer, 0, opts.render)
         
     else:
-        if opts.resume:
-            epoch_resume = int(os.path.splitext(os.path.split(opts.resume)[-1])[0].split("-")[1])
-            print("Resuming after {}".format(epoch_resume))
-            agent.opts.epoch_start = epoch_resume + 1
-    
-        # Starttraining here
-        agent.start_training(tb_writer)
+        for run_id in opts.seeds:
+            # Set the random seed
+            torch.manual_seed(run_id)
+            np.random.seed(run_id)
+
+            # Load data from load_path
+            if opts.load_path is not None:
+                agent.load(opts.load_path)
+
+            # Starttraining here
+            agent.start_training(tb_writer, run_id)
+            if tb_writer:
+                agent.log_performance(tb_writer)
             
 
 

@@ -27,6 +27,7 @@ def get_options(args=None):
     parser.add_argument('--no_tb', action='store_true', help='Disable Tensorboard logging')
     parser.add_argument('--seed', type=int, default=1, help='Random seed to use')
     parser.add_argument('--render', action='store_true', help='render to view game')
+    parser.add_argument('--multiple_run', type=int, default=1, help='number of repeat run')
     
     
     # training and validating
@@ -60,12 +61,9 @@ def get_options(args=None):
     parser.add_argument('--sigma_square', type=float, default=0.03)
 
 
-    # resume and load models
-    parser.add_argument('--load_path', default = None,
+    # load models
+    parser.add_argument('--load_path', default = None, #'C:/Users/e0408674/Desktop/Byzantine-RL/codes/outputs/CartPole-v1/worker10_byzantine0_/run_name_20201215T233536/epoch-1.pt',
                         help='Path to load model parameters and optimizer state from')
-    parser.add_argument('--resume', default = None, #'C:/Users/e0408674/Desktop/Byzantine-RL/codes/outputs/CartPole-v1/worker10_byzantine0_/run_name_20201215T233536/epoch-1.pt',
-                        help='Resume from previous checkpoint file')
-
     
     ### run_name for outputs
     parser.add_argument('--run_name', default='run_name', help='Name to identify the run')
@@ -90,8 +88,8 @@ def get_options(args=None):
     ) if not opts.no_tb else None
             
     if opts.env_name == 'CartPole-v1':
-        opts.max_epi_len = 500   
-        opts.max_trajectories = 2000
+        opts.max_epi_len = 500  
+        opts.max_trajectories =2000
         opts.lr_model = 2e-3
         opts.do_sample_for_training = True
         opts.base_epsilon = 0.00
@@ -101,6 +99,7 @@ def get_options(args=None):
         opts.N = 3
         opts.Bmin = 14
         opts.Bmax = 18
+        opts.max_reward = 600
 
     elif opts.env_name == 'Hopper-v2':
         opts.max_epi_len = 1000  
@@ -115,6 +114,7 @@ def get_options(args=None):
         opts.Bmax = 64
         opts.base_epsilon = 0.0
         opts.gamma  = 0.99
+        opts.max_reward = 3500
 
         # opts.max_epi_len = 1000  
         # opts.max_trajectories = 30000
@@ -143,6 +143,7 @@ def get_options(args=None):
         opts.Bmax = 32
         opts.base_epsilon = 0.0
         opts.gamma  = 0.995
+        opts.max_reward = 3000
 
         # opts.max_epi_len = 1000  
         # opts.max_trajectories = 10000
