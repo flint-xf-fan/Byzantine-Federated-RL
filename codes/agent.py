@@ -216,12 +216,12 @@ class Agent:
                 for idx,_ in enumerate(self.master.parameters()):
                     tmp = []
                     for bad_worker in range(opts.num_Byzantine):
-                        tmp.append(gradient[bad_worker][idx])
+                        tmp.append(gradient[bad_worker][idx].view(-1))
                     tmp = torch.stack(tmp)
 
                     estimated_2V = euclidean_dist(tmp, tmp).max()
 
-                    rnd = torch.rand(tmp[0]) * 2 * estimated_2V
+                    rnd = torch.rand(gradient[0][idx].shape) * estimated_2V
 
                     for bad_worker in range(opts.num_Byzantine):
                         gradient[bad_worker][idx] = gradient[bad_worker][idx] + rnd
