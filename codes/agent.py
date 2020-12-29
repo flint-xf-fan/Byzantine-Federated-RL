@@ -253,8 +253,8 @@ class Agent:
                 
                 # calculate C, Variance Bound V, thresold, and alpha
                 V = 2 * np.log(2 * opts.num_worker / opts.delta)
-                sigma_square = opts.sigma_square
-                threshold = 2 * sigma_square * np.sqrt(V / Batch_size)
+                sigma = opts.sigma
+                threshold = 2 * sigma * np.sqrt(V / Batch_size)
                 alpha = opts.alpha
             
                 # flatten the gradient vectors of each worker and put them together, shape [num_worker, -1]
@@ -283,22 +283,30 @@ class Agent:
                 # computes the vector median of the gradients, mu_med_vec, and
                 # filter the gradients it believes to be Byzantine and store the index of non-Byzantine graidents in Good_set
                 if torch.sum(k_prime) > 0:
+                    
+                    # mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])]
                     # mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
-                    mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])]
-                    Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 2 * threshold
+                    mu_mean_vec = torch.mean(mu_vec[k_prime],0).view(1,-1)
+                    mu_med_vec = mu_vec[k_prime][euclidean_dist(mu_mean_vec, mu_vec[k_prime]).argmin()]
+                    assert mu_med_vec.shape == mu_vec[0].shape
+                    
+                    Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 1 * threshold # !!!!!!!!!!!!!!!!!!!!!!!!!! 2 -> 1
                 else:
                     Good_set = k_prime # if median vector can not be calculated, skip this step, k_prime is emplty (i.e., all False)
                 
                 # avoid the scenarios that Good_set is empty or can have |Gt| < (1 − α)K.
                 if torch.sum(Good_set) < (1 - alpha) * self.world_size or torch.sum(Good_set) == 0:
                     # re-calculate vector median of the gradients
-                    k_prime = (dist <= 2 * sigma_square).sum(-1) > (0.5 * self.world_size)
+                    k_prime = (dist <= 2 * sigma).sum(-1) > (0.5 * self.world_size)
                     
                     if torch.sum(k_prime) > 0:
                         # mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
-                        mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])]
+                        # mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])]
+                        mu_mean_vec = torch.mean(mu_vec[k_prime],0).view(1,-1)
+                        mu_med_vec = mu_vec[k_prime][euclidean_dist(mu_mean_vec, mu_vec[k_prime]).argmin()]
+                        assert mu_med_vec.shape == mu_vec[0].shape
                         # re-filter with new vector median
-                        Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 4 * sigma_square
+                        Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 2 * sigma # !!!!!!!!!!!!!!!!!!!!!!!!!! 4 -> 2
                     else:
                         Good_set = torch.zeros(self.world_size,1).to(opts.device).bool()
             

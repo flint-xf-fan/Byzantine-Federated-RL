@@ -58,7 +58,7 @@ def get_options(args=None):
     parser.add_argument('--with_filter', action='store_true')
     parser.add_argument('--alpha', type=float, default=0.4)
     parser.add_argument('--delta', type=float, default=0.6)
-    parser.add_argument('--sigma_square', type=float, default=0.03)
+    parser.add_argument('--sigma', type=float, default=0.03)
 
 
     # load models
