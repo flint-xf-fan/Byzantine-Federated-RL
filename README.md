@@ -79,6 +79,11 @@ Reinforcement Learning](http://publish.illinois.edu/shripadgade/files/2020/03/AC
 * [An Improved Analysis of (Variance-Reduced) Policy
 Gradient and Natural Policy Gradient Methods](https://proceedings.neurips.cc/paper/2020/file/56577889b3c1cd083b6d7b32d32f99d5-Paper.pdf): analysis of VR-Natural PG for global optimal, up to some function approximation error.
 
+### Federated Learning
+* [Federated Optimization:Distributed Machine Learning for On-Device Intelligence](https://arxiv.org/pdf/1610.02527.pdf)
+* [Advances and Open Problems in Federated Learning](https://arxiv.org/abs/1912.04977): The survey. Which also states that it is important to study Byzantine in Fed Learning.
+### FedRL
+
 ### miscellaneous 
 * https://openreview.net/forum?id=rygRP2VYwB
 
