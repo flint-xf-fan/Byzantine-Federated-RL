@@ -45,6 +45,11 @@
 - [ ] Paper writing
 
 
+# dataset - MIT MIMIC data let's use v1.4?
+## dataset website
+https://physionet.org/content/mimiciii/1.4/
+## paper
+https://www.jmir.org/2020/7/e18477/#ref49
 
 
 # Reference paper
