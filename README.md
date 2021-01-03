@@ -49,7 +49,10 @@
 ## dataset website
 https://physionet.org/content/mimiciii/1.4/
 ## paper
-https://www.jmir.org/2020/7/e18477/#ref49
+- https://www.jmir.org/2020/7/e18477/#ref49
+- https://www.nature.com/articles/s41746-020-00323-1
+
+
 
 
 # Reference paper
