@@ -31,15 +31,15 @@
   - [X] implement SCSG optimizer
   - [ ] Testing env
     - [ ] cart-pole
-    - [ ] swimmer, or
-    - [ ] Half Cheetah
+    - <s>[ ] swimmer, or Half Cheetah </s>
+    - [ ] (new) MIMIC-III or MIMIC-VI dataset
   - [ ] Algo1 baselines
     - [ ] REINFORCE, G(PO)MDP; # distributed Adam
     - [ ] SVRPG (2018 ICML); # SCSG -> SVRG
     - [ ] ours
-  - [ ] Algo2 exp with various number of Byzantine nodes
+    - [ ] (new) at least one FedRL algo
+  - [ ] Different Byzantine attacks
   (for later)
-  - [ ] Algo2 design different byzantine attack
   - [ ] how to handle the case when all nodes being detected as byzantine..
   - [ ] discuss adaptive bound-related parameter - threshold paramter
 - [ ] Paper writing
