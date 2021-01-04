@@ -39,6 +39,7 @@
     - [ ] ours
     - [ ] (new) at least one FedRL algo
   - [ ] Different Byzantine attacks
+  
   (for later)
   - [ ] how to handle the case when all nodes being detected as byzantine..
   - [ ] discuss adaptive bound-related parameter - threshold paramter
