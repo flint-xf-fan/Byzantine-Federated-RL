@@ -34,11 +34,17 @@ class MlpPolicy(nn.Module):
         
         if activation == 'Tanh':
             self.activation = nn.Tanh
+        elif activation == 'ReLU':
+            self.activation = nn.ReLU
         else:
             raise NotImplementedError
             
         if output_activation == 'Identity':
             self.output_activation = nn.Identity
+        elif output_activation == 'Tanh':
+            self.output_activation = nn.Tanh
+        elif output_activation == 'ReLU':
+            self.output_activation = nn.ReLU
         else:
             raise NotImplementedError
             
@@ -63,7 +69,7 @@ class MlpPolicy(nn.Module):
         obs = obs.view(-1)
         
         # forward pass the policy net
-        logits = self.logits_net(obs)
+        logits = self.logits_net(obs) 
         
         # get the policy dist
         policy = Categorical(logits=logits)
@@ -73,7 +79,10 @@ class MlpPolicy(nn.Module):
             action = torch.tensor(fixed_action, device = obs.device)
         
         elif sample:
-            action = policy.sample()
+            try:
+                action = policy.sample()
+            except:
+                print(logits,obs)
         # take greedy action
         else:
             action = policy.probs.argmax()

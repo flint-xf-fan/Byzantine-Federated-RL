@@ -43,7 +43,7 @@ def get_options(args=None):
     
     # policy net
     parser.add_argument('--activation', default='Tanh')
-    parser.add_argument('--output_activation', default='Identity')
+    parser.add_argument('--output_activation', default='Tanh')
     
     
     # SVRG and SCSG
@@ -101,19 +101,67 @@ def get_options(args=None):
         
     elif opts.env_name == 'highway-v0':
         opts.discrete = True
+        opts.max_epi_len = 40  
+        opts.max_trajectories =3000
+        opts.lr_model = 1e-2
+        opts.do_sample_for_training = True
+        opts.hidden_units = '16,16'
+        opts.B = 16
+        opts.b = 4
+        opts.N = 3
+        opts.Bmin = 12
+        opts.Bmax = 20
+        opts.gamma  = 0.8
+        opts.min_reward = 0
+        opts.max_reward = 60
+    
+    elif opts.env_name == 'merge-v0':
+        opts.discrete = True
         opts.max_epi_len = 100  
         opts.max_trajectories =3000
-        opts.lr_model = 1e-3
+        opts.lr_model = 1e-2
         opts.do_sample_for_training = True
-        opts.hidden_units = '32,32,32'
+        opts.hidden_units = '32,32,32,'
+        opts.B = 32
+        opts.b = 16
+        opts.N = 3
+        opts.Bmin = 30
+        opts.Bmax = 34
+        opts.gamma  = 0.8
+        opts.min_reward = 0
+        opts.max_reward = 100
+    
+    elif opts.env_name == 'roundabout-v0':
+        opts.discrete = True
+        opts.max_epi_len = 40  
+        opts.max_trajectories =3000
+        opts.lr_model = 5e-3
+        opts.do_sample_for_training = True
+        opts.hidden_units = '16,16,8,8,'
+        opts.B = 16
+        opts.b = 4
+        opts.N = 3
+        opts.Bmin = 12
+        opts.Bmax = 20
+        opts.gamma  = 0.8
+        opts.min_reward = 0
+        opts.max_reward = 60
+
+    elif opts.env_name == 'parking-v0':
+        opts.discrete = False
+        opts.max_epi_len = 100  
+        opts.max_trajectories =3000
+        opts.lr_model = 5e-3
+        opts.do_sample_for_training = True
+        opts.hidden_units = '16,16'
         opts.B = 16
         opts.b = 4
         opts.N = 3
         opts.Bmin = 12
         opts.Bmax = 20
         opts.gamma  = 0.999
-        opts.min_reward = 0
-        opts.max_reward = 60
+        opts.min_reward = -100
+        opts.max_reward = 100
 
     elif opts.env_name == 'Hopper-v2':
         opts.max_epi_len = 1000  
@@ -191,7 +239,7 @@ def get_options(args=None):
     #     assert 2 * opts.num_worker / opts.delta <= np.exp(opts.B/2), \
     #         print(2 * opts.num_worker / opts.delta, np.exp(opts.B/2))
     
-    if opts.env_name in ['highway-v0']:
+    if opts.env_name in ['highway-v0', 'merge-v0', 'roundabout-v0', 'parking-v0']:
         opts.highway = True
     else:
         opts.highway = False

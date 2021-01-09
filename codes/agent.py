@@ -7,7 +7,7 @@ import numpy as np
 from worker import Worker
 from utils import torch_load_cpu, get_inner_model
 from sklearn import metrics
-from multiprocessing import Pool
+from torch.multiprocessing import Pool
 from matplotlib import pyplot as plt
 from itertools import repeat
 from scipy.interpolate import Rbf
@@ -132,7 +132,7 @@ class Agent:
             torch.set_rng_state(load_data['rng_state'])
             if self.opts.use_cuda:
                 torch.cuda.set_rng_state_all(load_data['cuda_rng_state'])
-        done
+    
         print(' [*] Loading data from {}'.format(load_path))
         
     
@@ -365,8 +365,12 @@ class Agent:
                     if mu:
                         # get the old log_p with the old policy (\theta_0) but fixing the actions to be the same as the sampled trajectory
                         old_logp = []
-                        for idx, obs in enumerate(batch_states):
+                        for idx, obs_raw in enumerate(batch_states):
                             # act in the environment with the fixed action
+                            if opts.env_name == 'parking-v0':
+                                obs = np.concatenate((obs_raw['observation'],obs_raw['desired_goal']))
+                            else:
+                                obs = obs_raw
                             _, old_log_prob = self.old_master.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(opts.device), 
                                                                          fixed_action = batch_actions[idx])
                             # store in the old_logp

@@ -37,26 +37,45 @@ class Worker:
         assert opts is not None
         
         if opts.highway:
-
+                
+            # self.env.configure({
+            #         "observation": {
+            #             "type": "Kinematics",
+            #             "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
+            #             "vehicles_count": 10,
+            #             "features_range": {
+            #                         "x": [-100, 100],
+            #                         "y": [-100, 100],
+            #                         "vx": [-20, 20],
+            #                         "vy": [-20, 20]
+            #                     },
+            #             "order": "sorted",
+            #             "simulation_frequency":10
+            #         }
+            #     })
+            obs = self.env.reset()
+                
             if opts.discrete:
                 
-                self.env.configure({
-                        "observation": {
-                            "type": "Kinematics",
-                            "vehicles_count": 8,
-                            "absolute": False
-                        }
-                    })
-                
-                obs_dim = self.env.observation_space.shape[1] * 8
+                obs_dim = obs.size
                 n_acts = self.env.action_space.n
-            
+                
                 hidden_sizes = list(eval(hidden_units))
                 self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
                 
                 self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
+                
             else:
-                raise NotImplementedError()
+                if opts.env_name == 'parking-v0':
+                    obs = np.concatenate((obs['observation'],obs['desired_goal']))
+                
+                obs_dim = obs.size
+                n_acts = self.env.action_space.shape[0]
+            
+                hidden_sizes = list(eval(hidden_units))
+                self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
+                
+                self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation)
 
         
         else:
@@ -85,7 +104,7 @@ class Worker:
     def rollout(self, device, render = False, env = None, obs = None, sample = True):
         
         if env is None and obs is None:
-            env = gym.make(self.env_name)
+            env = self.env
             obs = env.reset()
         done = False  
         ep_rew = []
@@ -93,6 +112,8 @@ class Worker:
             if render:
                 env.render()
             
+            if env.unwrapped.spec.id == 'parking-v0':
+                obs = np.concatenate((obs['observation'],obs['desired_goal']))
             action = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)[0]
             obs, rew, done, _ = env.step(action)
             ep_rew.append(rew)
@@ -121,7 +142,9 @@ class Worker:
             # save trajectory
             if record:
                 batch_states.append(obs)
-            # act in the environment            
+            # act in the environment  
+            if self.env.unwrapped.spec.id == 'parking-v0':
+                obs = np.concatenate((obs['observation'],obs['desired_goal']))
             act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)
             obs, rew, done, info = self.env.step(act)
             
