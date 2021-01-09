@@ -50,8 +50,8 @@ def run(opts):
     # Do validation only
     if opts.eval_only:
         # Set the random seed
-        torch.manual_seed(0)
-        np.random.seed(0)
+        torch.manual_seed(opts.seed)
+        np.random.seed(opts.seed)
         # Load data from load_path
         if opts.load_path is not None:
             agent.load(opts.load_path)
