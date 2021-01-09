@@ -36,14 +36,14 @@ def euclidean_dist(x, y):
     dist = dist.sqrt()
     return dist
 
-def worker_run(worker, param, opts, Batch_size, epsilon, seed):
+def worker_run(worker, param, opts, Batch_size, seed):
     
     # distribute current parameters
     worker.load_param_from_master(param)
     worker.env.seed(seed)
     
     # get returned gradients and info from all agents        
-    out = worker.train_one_epoch(Batch_size, opts.device, opts.do_sample_for_training, epsilon)
+    out = worker.train_one_epoch(Batch_size, opts.device, opts.do_sample_for_training)
     
     # store all values
     return out
@@ -69,7 +69,8 @@ class Agent:
                 hidden_units = opts.hidden_units, 
                 activation = opts.activation, 
                 output_activation = opts.output_activation,
-                max_epi_len = opts.max_epi_len
+                max_epi_len = opts.max_epi_len,
+                opts = opts
         ).to(opts.device)
         
         # figure out a copy of the master node for importance sampling purpose
@@ -81,7 +82,8 @@ class Agent:
                 hidden_units = opts.hidden_units, 
                 activation = opts.activation, 
                 output_activation = opts.output_activation,
-                max_epi_len = opts.max_epi_len
+                max_epi_len = opts.max_epi_len,
+                opts = opts
         ).to(opts.device)
         
         # figure out all the actors
@@ -98,7 +100,8 @@ class Agent:
                                     activation = opts.activation, 
                                     output_activation = opts.output_activation,
                                     attack_type =  opts.attack_type,
-                                    max_epi_len = opts.max_epi_len
+                                    max_epi_len = opts.max_epi_len,
+                                    opts = opts
                             ).to(opts.device))
         print(f'{opts.num_worker} workers initilized with {opts.num_Byzantine if opts.num_Byzantine >0 else "None"} of them are Byzantine.')
         
@@ -196,7 +199,6 @@ class Agent:
                        repeat(param),
                        repeat(opts),
                        repeat(Batch_size),
-                       repeat(opts.base_epsilon),
                        seeds)
             
             results = self.pool.starmap(worker_run, args)
@@ -352,8 +354,9 @@ class Agent:
                     weights, new_logp, batch_rets, batch_lens, batch_states, batch_actions = self.master.collect_experience_for_training(b, 
                                                                                                                                  opts.device, 
                                                                                                                                  record = True,
-                                                                                                                                 sample = opts.do_sample_for_training,
-                                                                                                                                 epsilon = opts.base_epsilon)
+                                                                                                                                 sample = opts.do_sample_for_training
+                                                                                                                                )
+                                                                                                                                 
                     # calculate gradient for the new policy (\theta_n)
                     loss_new = -(new_logp * weights).mean()
                     self.master.logits_net.zero_grad()
@@ -510,7 +513,7 @@ class Agent:
         plt.fill_between(range(self.opts.max_trajectories), l, h, alpha = 0.5)
         
         axes = plt.axes()
-        axes.set_ylim([0, self.opts.max_reward])
+        axes.set_ylim([self.opts.min_reward, self.opts.max_reward])
         
         plt.xlabel("Number of Trajectories")
         plt.ylabel("Reward")

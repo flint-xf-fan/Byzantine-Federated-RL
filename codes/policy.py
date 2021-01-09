@@ -60,6 +60,8 @@ class MlpPolicy(nn.Module):
         :return: action
         """
         
+        obs = obs.view(-1)
+        
         # forward pass the policy net
         logits = self.logits_net(obs)
         
@@ -94,11 +96,15 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         
         if activation == 'Tanh':
             self.activation = nn.Tanh
+        elif activation == 'ReLU':
+            self.activation = nn.ReLU
         else:
             raise NotImplementedError
             
         if output_activation == 'Tanh':
             self.output_activation = nn.Tanh
+        elif activation == 'ReLU':
+            self.activation = nn.ReLU
         else:
             raise NotImplementedError
             

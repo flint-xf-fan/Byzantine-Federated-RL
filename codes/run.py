@@ -50,8 +50,8 @@ def run(opts):
     # Do validation only
     if opts.eval_only:
         # Set the random seed
-        torch.manual_seed(run_id)
-        np.random.seed(run_id)
+        torch.manual_seed(0)
+        np.random.seed(0)
         # Load data from load_path
         if opts.load_path is not None:
             agent.load(opts.load_path)
@@ -72,7 +72,8 @@ def run(opts):
                 hidden_units = opts.hidden_units, 
                 activation = opts.activation, 
                 output_activation = opts.output_activation,
-                max_epi_len = opts.max_epi_len
+                max_epi_len = opts.max_epi_len,
+                opts = opts
             ).to(opts.device)
                     
             model_actor = get_inner_model(agent.master.logits_net)

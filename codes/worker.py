@@ -6,6 +6,7 @@ from policy import MlpPolicy, DiagonalGaussianMlpPolicy
 from utils import get_inner_model
 from copy import deepcopy
 import math
+import highway_env
 
 class Worker:
 
@@ -18,7 +19,8 @@ class Worker:
                  activation = 'Tanh',
                  output_activation = 'Identity',
                  attack_type = None,
-                 max_epi_len = 0
+                 max_epi_len = 0,
+                 opts = None
                  ):
         super(Worker, self).__init__()
         
@@ -32,22 +34,49 @@ class Worker:
         self.attack_type = attack_type
         self.max_epi_len = max_epi_len
         
-        # make policy network
-        obs_dim = self.env.observation_space.shape[0]
-        if isinstance(self.env.action_space, Discrete):
-            n_acts = self.env.action_space.n
-        else:
-            n_acts = self.env.action_space.shape[0]
-        hidden_sizes = list(eval(hidden_units))
-        self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
+        assert opts is not None
         
-        if isinstance(self.env.action_space, Discrete):
-            self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
-        else:
-            if self.env_name == 'Humanoid-v2':
-                self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation, geer = 0.4)
+        if opts.highway:
+
+            if opts.discrete:
+                
+                self.env.configure({
+                        "observation": {
+                            "type": "Kinematics",
+                            "vehicles_count": 8,
+                            "absolute": False
+                        }
+                    })
+                
+                obs_dim = self.env.observation_space.shape[1] * 8
+                n_acts = self.env.action_space.n
+            
+                hidden_sizes = list(eval(hidden_units))
+                self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
+                
+                self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
             else:
-                self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation,)
+                raise NotImplementedError()
+
+        
+        else:
+        
+            obs_dim = self.env.observation_space.shape[0]
+            if isinstance(self.env.action_space, Discrete):
+                n_acts = self.env.action_space.n
+            else:
+                n_acts = self.env.action_space.shape[0]
+            
+            hidden_sizes = list(eval(hidden_units))
+            self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
+            
+            if isinstance(self.env.action_space, Discrete):
+                self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
+            else:
+                if self.env_name == 'Humanoid-v2':
+                    self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation, geer = 0.4)
+                else:
+                    self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation,)
     
     def load_param_from_master(self, param):
         model_actor = get_inner_model(self.logits_net)
@@ -70,7 +99,7 @@ class Worker:
 
         return np.sum(ep_rew), len(ep_rew), ep_rew
     
-    def collect_experience_for_training(self, B, device, record = False, sample = True, epsilon = 0.05):
+    def collect_experience_for_training(self, B, device, record = False, sample = True):
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
         batch_rets = []         # for measuring episode returns
@@ -92,13 +121,8 @@ class Worker:
             # save trajectory
             if record:
                 batch_states.append(obs)
-            # act in the environment
-            if np.random.rand() < epsilon:
-                action_rnd = self.env.action_space.sample()
-            else:
-                action_rnd = None
-            
-            act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), fixed_action = action_rnd, sample = sample)
+            # act in the environment            
+            act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)
             obs, rew, done, info = self.env.step(act)
             
             # save action_log_prob, reward
@@ -144,10 +168,10 @@ class Worker:
             return weights, logp, batch_rets, batch_lens
     
     
-    def train_one_epoch(self, B, device, sample, epsilon):
+    def train_one_epoch(self, B, device, sample):
         
         # collect experience by acting in the environment with current policy
-        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device, sample = sample, epsilon = epsilon)
+        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device, sample = sample)
         
         # calculate policy gradient loss
         batch_loss = -(logp * weights).mean()

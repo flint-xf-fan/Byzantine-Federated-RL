@@ -18,7 +18,7 @@ def get_options(args=None):
                                     )
 
     ### overall run settings
-    parser.add_argument('--env_name', '--env', type=str, default='CartPole-v1',# choices = ['Hopper-v2', 'Swimmer-v2', 'CartPole-v1'], 
+    parser.add_argument('--env_name', '--env', type=str, default='highway-v0',# choices = ['Hopper-v2', 'Swimmer-v2', 'CartPole-v1'], 
                         help='env name for the game')
     parser.add_argument('--eval_only', action='store_true', 
                         help='used only if to evaluate a model')
@@ -36,13 +36,12 @@ def get_options(args=None):
     
     
     # Byzantine parameters
-    parser.add_argument('--num_worker', type=int, default=10, help = 'number of worker node')
+    parser.add_argument('--num_worker', type=int, default=1, help = 'number of worker node')
     parser.add_argument('--num_Byzantine', type=int, default=0, help = 'number of worker node that is Byzantine')
     parser.add_argument('--attack_type', type=str, default='detect-attack', choices = ['sign-flipping', 'zero-gradient', 'random-noise', 'detect-attack'], help = 'the attack type of a Byzantine worker')
     
     
     # policy net
-    parser.add_argument('--hidden_units', default = '16')
     parser.add_argument('--activation', default='Tanh')
     parser.add_argument('--output_activation', default='Identity')
     
@@ -50,9 +49,6 @@ def get_options(args=None):
     # SVRG and SCSG
     parser.add_argument('--svrg', action='store_true', help='run SVRG')
     parser.add_argument('--scsg', action='store_true', help='run SCSG')
-
-    # REINFORCE
-    parser.add_argument('--gamma', type=float, default=0.999)
 
     ### Byzantine Filtering
     parser.add_argument('--with_filter', action='store_true')
@@ -87,34 +83,51 @@ def get_options(args=None):
         "worker{}_byzantine{}_{}".format(opts.num_worker, opts.num_Byzantine, opts.attack_type),
         opts.run_name
     ) if not opts.no_tb else None
-            
+    
     if opts.env_name == 'CartPole-v1':
         opts.max_epi_len = 500  
-        opts.max_trajectories =2000
-        opts.lr_model = 2e-3
+        opts.max_trajectories =3000
+        opts.lr_model = 1e-3
         opts.do_sample_for_training = True
-        opts.base_epsilon = 0.00
         opts.hidden_units = '16,16'
         opts.B = 16
         opts.b = 4
         opts.N = 3
-        opts.Bmin = 14
-        opts.Bmax = 18
+        opts.Bmin = 12
+        opts.Bmax = 20
+        opts.gamma  = 0.999
+        opts.min_reward = 0
         opts.max_reward = 600
+        
+    elif opts.env_name == 'highway-v0':
+        opts.discrete = True
+        opts.max_epi_len = 100  
+        opts.max_trajectories =3000
+        opts.lr_model = 1e-3
+        opts.do_sample_for_training = True
+        opts.hidden_units = '32,32,32'
+        opts.B = 16
+        opts.b = 4
+        opts.N = 3
+        opts.Bmin = 12
+        opts.Bmax = 20
+        opts.gamma  = 0.999
+        opts.min_reward = 0
+        opts.max_reward = 60
 
     elif opts.env_name == 'Hopper-v2':
         opts.max_epi_len = 1000  
         opts.max_trajectories = 30000
-        opts.lr_model = 3e-3 #2
-        opts.hidden_units = '64,64,64'
+        opts.lr_model = 1e-2 #2e-3
+        opts.hidden_units = '64,64'
         opts.do_sample_for_training = True
         opts.B = 64
-        opts.b = 32
-        opts.N = 2
-        opts.Bmin = 32
-        opts.Bmax = 64
-        opts.base_epsilon = 0.0
+        opts.b = 24
+        opts.N = 3
+        opts.Bmin = 56
+        opts.Bmax = 72
         opts.gamma  = 0.99
+        opts.min_reward = 0
         opts.max_reward = 3500
 
         # opts.max_epi_len = 1000  
@@ -134,17 +147,17 @@ def get_options(args=None):
 
         opts.max_epi_len = 1000  
         opts.max_trajectories = 10000
-        opts.lr_model = 4e-3 # 4
-        opts.hidden_units = '64,64,64'
+        opts.lr_model = 1e-2 # 4e-3
+        opts.hidden_units = '64,64'
         opts.do_sample_for_training = True
         opts.B = 32
-        opts.b = 10
-        opts.N = 2
-        opts.Bmin = 24
-        opts.Bmax = 32
-        opts.base_epsilon = 0.0
-        opts.gamma  = 0.995
-        opts.max_reward = 3000
+        opts.b = 16
+        opts.N = 3
+        opts.Bmin = 30
+        opts.Bmax = 34
+        opts.gamma  = 0.999
+        opts.min_reward = -2000
+        opts.max_reward = 4500
 
         # opts.max_epi_len = 1000  
         # opts.max_trajectories = 10000
@@ -177,6 +190,11 @@ def get_options(args=None):
     #         print( opts.delta * opts.B / (np.exp(2 * (1 - 2 * opts.delta))), 2 * opts.num_worker / opts.delta)
     #     assert 2 * opts.num_worker / opts.delta <= np.exp(opts.B/2), \
     #         print(2 * opts.num_worker / opts.delta, np.exp(opts.B/2))
+    
+    if opts.env_name in ['highway-v0']:
+        opts.highway = True
+    else:
+        opts.highway = False
     
     assert opts.svrg + opts.scsg <= 1
     print('run vpg\n' if opts.svrg + opts.scsg == 0 else ('run scsg\n' if opts.scsg else 'run svrg\n'))
