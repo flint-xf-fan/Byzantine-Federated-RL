@@ -7,7 +7,7 @@ import numpy as np
 from worker import Worker
 from utils import torch_load_cpu, get_inner_model
 from sklearn import metrics
-from multiprocessing import Pool
+from torch.multiprocessing import Pool
 from matplotlib import pyplot as plt
 from itertools import repeat
 from scipy.interpolate import Rbf
@@ -448,7 +448,8 @@ class Agent:
                 (epoch, np.mean(batch_loss), critic_loss, np.mean(batch_rets), np.mean(batch_lens), N_good))
             
             # current step: number of trajectories sampled
-            step += round((Batch_size * self.world_size  + b * N_t) / (1 + self.world_size))
+            # step += max(Batch_size, b * N_t) if self.world_size > 1 else Batch_size + b * N_t
+            step += round((Batch_size * self.world_size  + b * N_t) / (1 + self.world_size)) if self.world_size > 1 else Batch_size + b * N_t
             
             # Logging to tensorboard
             if(tb_logger is not None):

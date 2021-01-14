@@ -22,7 +22,7 @@ def get_options(args=None):
                         help='env name for the game')
     parser.add_argument('--eval_only', action='store_true', 
                         help='used only if to evaluate a model')
-    parser.add_argument('--no_cuda', action='store_true', help='Disable CUDA')
+    parser.add_argument('--no_cuda', action='store_false', help='Disable CUDA')
     parser.add_argument('--do_saving', action='store_false', help='Enable saving checkpoints')
     parser.add_argument('--no_tb', action='store_true', help='Disable Tensorboard logging')
     parser.add_argument('--seed', type=int, default=1, help='Random seed to use')
@@ -88,7 +88,7 @@ def get_options(args=None):
     if opts.env_name == 'CartPole-v1':
         opts.use_critic = False
         opts.max_epi_len = 500  
-        opts.max_trajectories =3000
+        opts.max_trajectories = 5000
         opts.lr_model = 1e-3
         opts.do_sample_for_training = True
         opts.hidden_units = '16,16' #'16,16'
@@ -106,7 +106,7 @@ def get_options(args=None):
         opts.use_critic = False
         opts.max_epi_len =1000  
         opts.max_trajectories =3000
-        opts.lr_model = 3e-4
+        opts.lr_model = 5e-3
         opts.do_sample_for_training = True
         opts.hidden_units = '64,64'
         opts.B = 32
@@ -114,7 +114,7 @@ def get_options(args=None):
         opts.N = 3
         opts.Bmin = 12
         opts.Bmax = 20
-        opts.gamma  = 0.999
+        opts.gamma  = 0.995
         opts.min_reward = 0
         opts.max_reward = 600 
         
