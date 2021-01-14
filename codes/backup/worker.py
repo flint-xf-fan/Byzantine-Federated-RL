@@ -2,14 +2,12 @@ import torch
 import numpy as np
 import gym
 from gym.spaces import Discrete, Box
-from policy import MlpPolicy, DiagonalGaussianMlpPolicy, LinearCritic, CnnPolicy
-from utils import get_inner_model, save_frames_as_gif
+from policy import MlpPolicy, DiagonalGaussianMlpPolicy
+from utils import get_inner_model
 from copy import deepcopy
 import math
-import torch.optim as optim
 from utils import env_wrapper
-from highway_env import __init__
-import pprint
+import highway_env
 
 class Worker:
 
@@ -40,42 +38,21 @@ class Worker:
         assert opts is not None
         
         if opts.highway:
-            
-            if env_name == 'parking-v0':
-                self.env.configure({
-                    'vehicles_count': 1,
-                    "simulation_frequency": 10,
-                    "policy_frequency": 2,
-                    "duration": 100,
-                    "collision_reward" : -10,
-                    "reward_speed_range": [20, 40]
+                
+            self.env.configure({
+                        # "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
+                        "vehicles_count": 10,
+                        # "features_range": {
+                        #             "x": [-100, 100],
+                        #             "y": [-100, 100],
+                        #             "vx": [-20, 20],
+                        #             "vy": [-20, 20]
+                        #         },
+                        # "order": "sorted",
+                        "simulation_frequency":5,
+                        "policy_frequency":1,
+                        "duration": 100
                 })
-            elif env_name == 'highway-v0':
-                pass
-            else:
-                self.env.configure({
-                        "observation": {
-                            "type": "Kinematics",
-                            "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
-                            "features_range": {
-                                        "x": [-100, 100],
-                                        "y": [-100, 100],
-                                        "vx": [-20, 20],
-                                        "vy": [-20, 20]
-                                    },
-                            "absolute": False,
-                            "order": "sorted",
-                        },
-                        'vehicles_count': 10,
-                        "simulation_frequency": 10,
-                        "policy_frequency": 2,
-                        "duration": 100,
-                        "collision_reward" : -10,
-                        "reward_speed_range": [20, 40]
-                    })
-            if id==1: 
-                print('Env configuration for highway-env:',)
-                pprint.pprint(self.env.config)
             obs = self.env.reset()
                 
             if opts.discrete:
@@ -86,10 +63,7 @@ class Worker:
                 hidden_sizes = list(eval(hidden_units))
                 self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
                 
-                if env_name == 'highway-v0':
-                    self.logits_net = CnnPolicy(self.sizes, activation, output_activation)
-                else:
-                    self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
+                self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
                 
             else:
                 
@@ -118,81 +92,32 @@ class Worker:
                 self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
             else:
                 if self.env_name == 'Humanoid-v2':
-                    if id==1: print('geer = ', 0.4)
                     self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation, geer = 0.4)
-        
-                elif self.env_name == 'Pendulum-v0':
-                    if id==1: print('geer = ', 2)
-                    self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation, geer = 2)
-                    
                 else:
                     self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation,)
-        
-        ################
-        self.use_critic = opts.use_critic
-        if self.use_critic:
-            self.critic = LinearCritic(self.sizes)
-        ################
-        
-        if self.id == 1:
-            print(self.logits_net)
-
     
-    def load_param_from_master(self, param, param_for_critic):
+    def load_param_from_master(self, param):
         model_actor = get_inner_model(self.logits_net)
         model_actor.load_state_dict({**model_actor.state_dict(), **param})
-        
-        if self.use_critic:
-            self.critic.set_parameters(param_for_critic)
     
-    def rollout(self, device, render = False, env = None, obs = None, sample = True, mode = 'human', save_dir = './', filename = '.'):
+    def rollout(self, device, render = False, env = None, obs = None, sample = True):
         
         if env is None and obs is None:
             env = self.env
-            self.config()
             obs = env.reset()
-        else:
-            self.config()
         done = False  
         ep_rew = []
-        frames = []
         while not done:
             if render:
-                if mode == 'rgb':
-                    frames.append(env.render(mode="rgb_array"))
-                else:
-                    env.render()
-                
+                env.render()
             obs = env_wrapper(env.unwrapped.spec.id, obs)
-            action = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)[0]
+            action = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = True)[0]
             obs, rew, done, _ = env.step(action)
             ep_rew.append(rew)
 
-        if mode == 'rgb': save_frames_as_gif(frames, save_dir, filename)
-        print('reward:', np.sum(ep_rew), 'ep_len', len(ep_rew))
         return np.sum(ep_rew), len(ep_rew), ep_rew
     
-    def config(self):
-        if self.env_name == 'highway-v0':
-            screen_width, screen_height = 84, 84
-            config = {
-                "offscreen_rendering": True,
-                "observation": {
-                    "type": "GrayscaleObservation",
-                    "weights": [0.2989, 0.5870, 0.1140],  # weights for RGB conversion
-                    "stack_size": 4,
-                    "observation_shape": (screen_width, screen_height)
-                },
-                "screen_width": screen_width,
-                "screen_height": screen_height,
-                # "scaling": 1.75,
-                "policy_frequency": 2
-            }
-            self.env.configure(config)
-        
-    
-    def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0.1):
-        self.config()
+    def collect_experience_for_training(self, B, device, record = False, sample = True):
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
         batch_rets = []         # for measuring episode returns
@@ -208,39 +133,16 @@ class Worker:
         if record:
             batch_states = []
             batch_actions = []
-        
-        #########
-        if self.use_critic:
-            critic_value = []
-            if critic_loss:
-                self.input_value = []
-                self.output_value = []
-        #########
 
-        t = 1
         # collect experience by acting in the environment with current policy
         while True:
             # save trajectory
             if record:
                 batch_states.append(obs)
             # act in the environment  
-            obs = env_wrapper(self.env_name, obs)
-            
-            if np.random.rand() < epsilon:
-                rnd_action = self.env.action_space.sample()
-            else:
-                rnd_action = None
-            
-            act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample, fixed_action = rnd_action)
-            #########
-            if self.use_critic:
-                in_, out_ = self.critic.predict(torch.as_tensor(obs, dtype=torch.float32).to(device), t)
-                critic_value.append(out_)
-                if critic_loss:
-                    self.input_value.append(in_)
-            #########
+            obs = env_wrapper(self.env.unwrapped.spec.id, obs)
+            act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)
             obs, rew, done, info = self.env.step(act)
-            t = t + 1
             
             # save action_log_prob, reward
             batch_log_prob.append(log_prob)
@@ -258,41 +160,21 @@ class Worker:
                 
                 # the weight for each logprob(a_t|s_T) is sum_t^T (gamma^(t'-t) * r_t')
                 returns = []
-                #########
-                if not done and self.use_critic:
-                    R = self.critic.predict(torch.as_tensor(obs, dtype=torch.float32).to(device), t)[1]
-                else:
-                    R = 0
-                #########
+                R = 0
                 for r in ep_rews[::-1]:
                     R = r + self.gamma * R
                     returns.insert(0, R)
-                #print(returns)
-                returns = torch.tensor(returns, dtype=torch.float32)
-
-                #########
-                if self.use_critic:
-                    critic_value_detach = torch.as_tensor(critic_value).view(-1)
-                        
-                    advantage = returns - critic_value_detach
-                    # print(advantage)
-                    # print(advantage)
-
-                    critic_value = []
-                    if critic_loss: self.output_value += returns.tolist()
-                    
-                #########
-                else:
-                    advantage = (returns - returns.mean()) / (returns.std() + 1e-5)
+                returns = torch.tensor(returns)
+                returns = (returns - returns.mean()) / (returns.std() + 1e-5)
                 
-                batch_weights += advantage
+                batch_weights += returns
 
                 # end experience loop if we have enough of it
                 if len(batch_lens) >= B:
                     break
                 
                 # reset episode-specific variables
-                obs, done, ep_rews, t = self.env.reset(), False, [], 1
+                obs, done, ep_rews = self.env.reset(), False, []
 
 
         # make torch tensor and restrict to batch_size

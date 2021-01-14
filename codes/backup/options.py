@@ -18,7 +18,7 @@ def get_options(args=None):
                                     )
 
     ### overall run settings
-    parser.add_argument('--env_name', '--env', type=str, default='highway-v0',# choices = ['Hopper-v2', 'Swimmer-v2', 'CartPole-v1'], 
+    parser.add_argument('--env_name', '--env', type=str, default='parking-v0',# choices = ['Hopper-v2', 'Swimmer-v2', 'CartPole-v1'], 
                         help='env name for the game')
     parser.add_argument('--eval_only', action='store_true', 
                         help='used only if to evaluate a model')
@@ -27,7 +27,6 @@ def get_options(args=None):
     parser.add_argument('--no_tb', action='store_true', help='Disable Tensorboard logging')
     parser.add_argument('--seed', type=int, default=1, help='Random seed to use')
     parser.add_argument('--render', action='store_true', help='render to view game')
-    parser.add_argument('--mode', type=str, default='human')
     parser.add_argument('--multiple_run', type=int, default=1, help='number of repeat run')
     
     
@@ -59,7 +58,7 @@ def get_options(args=None):
 
 
     # load models
-    parser.add_argument('--load_path', default = None,# 'outputs/epoch-131.pt',#None,# 'outputs/epoch-10.pt', #'C:/Users/e0408674/Desktop/Byzantine-RL/codes/outputs/CartPole-v1/worker10_byzantine0_/run_name_20201215T233536/epoch-1.pt',
+    parser.add_argument('--load_path', default = None,# 'outputs/epoch-10.pt', #'C:/Users/e0408674/Desktop/Byzantine-RL/codes/outputs/CartPole-v1/worker10_byzantine0_/run_name_20201215T233536/epoch-1.pt',
                         help='Path to load model parameters and optimizer state from')
     parser.add_argument('--log_dir', default = 'logs')
     
@@ -86,12 +85,11 @@ def get_options(args=None):
     ) if not opts.no_tb else None
     
     if opts.env_name == 'CartPole-v1':
-        opts.use_critic = False
         opts.max_epi_len = 500  
         opts.max_trajectories =3000
         opts.lr_model = 1e-3
         opts.do_sample_for_training = True
-        opts.hidden_units = '16,16' #'16,16'
+        opts.hidden_units = '16,16'
         opts.B = 16
         opts.b = 4
         opts.N = 3
@@ -100,113 +98,75 @@ def get_options(args=None):
         opts.gamma  = 0.999
         opts.min_reward = 0
         opts.max_reward = 600
-
-   
-    if opts.env_name == 'MountainCarContinuous-v0':
-        opts.use_critic = False
-        opts.max_epi_len =1000  
-        opts.max_trajectories =3000
-        opts.lr_model = 3e-4
-        opts.do_sample_for_training = True
-        opts.hidden_units = '64,64'
-        opts.B = 32
-        opts.b = 4
-        opts.N = 3
-        opts.Bmin = 12
-        opts.Bmax = 20
-        opts.gamma  = 0.999
-        opts.min_reward = 0
-        opts.max_reward = 600 
-        
-    if opts.env_name == 'Pendulum-v0':
-        opts.use_critic = False
-        opts.max_epi_len = 200  
-        opts.max_trajectories = 10000
-        opts.lr_model = 3e-4
-        opts.do_sample_for_training = True
-        opts.hidden_units = '64,64,'
-        opts.B = 32
-        opts.b = 16
-        opts.N = 3
-        opts.Bmin = 30
-        opts.Bmax = 34
-        opts.gamma  = 0.99
-        opts.min_reward = 0
-        opts.max_reward = 600 
         
     elif opts.env_name == 'highway-v0':
-        opts.use_critic = False
         opts.discrete = True
         opts.max_epi_len = 100
         opts.max_trajectories =30000
-        opts.lr_model = 5e-3 #3e-4
+        opts.lr_model = 1e-3
         opts.do_sample_for_training = True
-        opts.hidden_units = '64,64'
+        opts.hidden_units = '128,128,128'
         opts.B = 32
         opts.b = 16
         opts.N = 3
         opts.Bmin = 30
         opts.Bmax = 34
-        opts.gamma  = 0.99
+        opts.gamma  = 0.8
         opts.min_reward = 0
         opts.max_reward = 60
     
     elif opts.env_name == 'merge-v0':
         opts.discrete = True
-        opts.use_critic = False
         opts.max_epi_len = 100  
         opts.max_trajectories = 30000
-        opts.lr_model = 3e-4
+        opts.lr_model = 1e-3
         opts.do_sample_for_training = True
-        opts.hidden_units = '64,64'
+        opts.hidden_units = '128,128,128'
         opts.B = 32
         opts.b = 16
         opts.N = 3
         opts.Bmin = 30
         opts.Bmax = 34
-        opts.gamma  = 0.99
+        opts.gamma  = 0.8
         opts.min_reward = 0
         opts.max_reward = 100
     
     elif opts.env_name == 'roundabout-v0':
-        opts.use_critic = False
         opts.discrete = True
         opts.max_epi_len = 100 
         opts.max_trajectories =30000
-        opts.lr_model = 3e-4
+        opts.lr_model = 5e-3
         opts.do_sample_for_training = True
-        opts.hidden_units = '64,64'
+        opts.hidden_units = '128,128,128'
         opts.B = 32
         opts.b = 16
         opts.N = 3
         opts.Bmin = 30
         opts.Bmax = 34
-        opts.gamma  = 0.99
+        opts.gamma  = 0.8
         opts.min_reward = 0
         opts.max_reward = 60
 
     elif opts.env_name == 'parking-v0':
         opts.discrete = False
-        opts.use_critic = False
         opts.max_epi_len = 100  
         opts.max_trajectories =30000
-        opts.lr_model = 1e-3
+        opts.lr_model = 8e-3
         opts.do_sample_for_training = True
-        opts.hidden_units = '64,64'
+        opts.hidden_units = '128,128,128'
         opts.B = 32
         opts.b = 16
         opts.N = 3
         opts.Bmin = 30
         opts.Bmax = 34
-        opts.gamma  = 0.99
+        opts.gamma  = 0.6
         opts.min_reward = -100
         opts.max_reward = 0
 
     elif opts.env_name == 'Hopper-v2':
-        opts.use_critic = False
         opts.max_epi_len = 1000  
         opts.max_trajectories = 30000
-        opts.lr_model = 3e-4 #2e-3
+        opts.lr_model = 1e-2 #2e-3
         opts.hidden_units = '64,64'
         opts.do_sample_for_training = True
         opts.B = 64
@@ -232,11 +192,10 @@ def get_options(args=None):
         # opts.gamma  = 0.995
 
     elif opts.env_name == 'HalfCheetah-v2':
-        opts.use_critic = False
+
         opts.max_epi_len = 1000  
         opts.max_trajectories = 10000
-        opts.lr_model = 3e-4 # 4e-3
-        opts.lr_critic = 1e-3
+        opts.lr_model = 1e-2 # 4e-3
         opts.hidden_units = '64,64'
         opts.do_sample_for_training = True
         opts.B = 32
@@ -244,7 +203,7 @@ def get_options(args=None):
         opts.N = 3
         opts.Bmin = 30
         opts.Bmax = 34
-        opts.gamma  = 0.99
+        opts.gamma  = 0.999
         opts.min_reward = -2000
         opts.max_reward = 4500
 

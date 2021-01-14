@@ -56,7 +56,7 @@ def run(opts):
         if opts.load_path is not None:
             agent.load(opts.load_path)
         
-        agent.start_validating(tb_writer, 0, opts.render, mode = opts.mode)
+        agent.start_validating(tb_writer, 0, opts.render)
         
     else:
         for run_id in opts.seeds:

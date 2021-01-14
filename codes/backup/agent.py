@@ -7,7 +7,7 @@ import numpy as np
 from worker import Worker
 from utils import torch_load_cpu, get_inner_model
 from sklearn import metrics
-from multiprocessing import Pool
+from torch.multiprocessing import Pool
 from matplotlib import pyplot as plt
 from itertools import repeat
 from scipy.interpolate import Rbf
@@ -37,10 +37,10 @@ def euclidean_dist(x, y):
     dist = dist.sqrt()
     return dist
 
-def worker_run(worker, param, param_for_critic, opts, Batch_size, seed):
+def worker_run(worker, param, opts, Batch_size, seed):
     
     # distribute current parameters
-    worker.load_param_from_master(param, param_for_critic)
+    worker.load_param_from_master(param)
     worker.env.seed(seed)
     
     # get returned gradients and info from all agents        
@@ -109,6 +109,7 @@ class Agent:
         if not opts.eval_only:
             # figure out the optimizer
             self.optimizer = optim.Adam(self.master.logits_net.parameters(), lr = opts.lr_model)
+            
         
         self.pool = Pool(self.world_size)
         
@@ -120,10 +121,6 @@ class Agent:
         # load data for actor
         model_actor = get_inner_model(self.master.logits_net)
         model_actor.load_state_dict({**model_actor.state_dict(), **load_data.get('master', {})})
-        # load data for critic
-        # model_critic = get_inner_model(self.master.critic)
-        # model_critic.load_state_/dict({**model_critic.state_dict(), **load_data.get('critic', {})})
-        
         
         if not self.opts.eval_only:
             # load data for optimizer
@@ -145,7 +142,6 @@ class Agent:
         torch.save(
             {
                 'master': get_inner_model(self.master.logits_net).state_dict(),
-                'critic': get_inner_model(self.master.critic).state_dict() if self.opts.use_critic else None,
                 'optimizer': self.optimizer.state_dict(),
                 'rng_state': torch.get_rng_state(),
                 'cuda_rng_state': torch.cuda.get_rng_state_all(),
@@ -183,7 +179,7 @@ class Agent:
             self.train()
             
             # setup lr_scheduler
-            print("Training with lr={:.3e} for run {} (Critic = {})".format(self.optimizer.param_groups[0]['lr'], opts.run_name, opts.use_critic) , flush=True)
+            print("Training with lr={:.3e} for run {}".format(self.optimizer.param_groups[0]['lr'], opts.run_name) , flush=True)
             
             # some emplty list for training and logging purpose
             gradient = []
@@ -193,10 +189,6 @@ class Agent:
             
             # distribute current x to all workers and collect the gradient from workers
             param = get_inner_model(self.master.logits_net).state_dict()
-            if self.opts.use_critic:
-                param_for_critic = self.master.critic.get_parameters()
-            else:
-                param_for_critic = None
             
             if opts.scsg:
                 Batch_size = np.random.randint(opts.Bmin, opts.Bmax + 1)
@@ -206,7 +198,6 @@ class Agent:
             seeds = np.random.randint(1,100000, self.world_size).tolist()
             args = zip(self.workers,
                        repeat(param),
-                       repeat(param_for_critic),
                        repeat(opts),
                        repeat(Batch_size),
                        seeds)
@@ -258,7 +249,7 @@ class Agent:
 #                batch_lens.append(lens)
        
             # make the old policy as a copy of the current master node
-            self.old_master.load_param_from_master(param, param_for_critic)
+            self.old_master.load_param_from_master(param)
             
             # do filter step to detect Byzantine worker on master node if needed
             if opts.with_filter:
@@ -343,8 +334,6 @@ class Agent:
             
             # perform gradient update in master node
             grad_array = [] # store gradients for logging
-            
-            
             # with svrg or graident descent
             if opts.scsg or opts.svrg:
                 
@@ -361,22 +350,14 @@ class Agent:
                    
                     # calculate new gradient in master node
                     self.optimizer.zero_grad()
-
+                
                     # sample b trajectory using the latest policy (\theta_n) of master node
                     weights, new_logp, batch_rets, batch_lens, batch_states, batch_actions = self.master.collect_experience_for_training(b, 
                                                                                                                                  opts.device, 
                                                                                                                                  record = True,
-                                                                                                                                 sample = opts.do_sample_for_training,
-                                                                                                                                 critic_loss = True)
-                        
-                    # ###############
-                    # if self.opts.use_critic:
-                    #     input_value = torch.as_tensor(self.master.input_value).view(len(self.master.input_value), -1).numpy()
-                    #     output_value = torch.as_tensor(self.master.output_value).view(-1, 1).numpy()
-                    #     critic_loss = self.master.critic.fit(input_value, output_value)
-                    
-                    # ###############
-                         
+                                                                                                                                 sample = opts.do_sample_for_training
+                                                                                                                                )
+                                                                                                                                 
                     # calculate gradient for the new policy (\theta_n)
                     loss_new = -(new_logp * weights).mean()
                     self.master.logits_net.zero_grad()
@@ -410,42 +391,21 @@ class Agent:
                 
                     # take a gradient step
                     self.optimizer.step()
-        
             else:
                 
                 b = 0
                 N_t = 0
                 
-                # take a gradient step
-                self.optimizer.step()  
-                
                 # perform gradient descent with mu vector
                 for idx,item in enumerate(self.master.parameters()):
                     item.grad = mu[idx]
                     grad_array += (item.grad.data.view(-1).cpu().tolist())
-                    
-            # sample b trajectory using the latest policy (\theta_n) of master node
-            self.master.collect_experience_for_training(32, 
-                                                        opts.device, 
-                                                        record = False,
-                                                        sample = opts.do_sample_for_training,
-                                                        critic_loss = True)
-
-            ###############
-            if self.opts.use_critic :#and epoch % 2 == 0:
-                
-                input_value = torch.as_tensor(self.master.input_value).view(len(self.master.input_value), -1).numpy()
-                output_value = torch.as_tensor(self.master.output_value).view(-1, 1).numpy()
-
-                critic_loss = self.master.critic.fit(input_value, output_value)
-                # print(input_value, output_value)
-            else:
-                critic_loss = 0
             
-            ###############
+                # take a gradient step
+                self.optimizer.step()    
             
-            print('\nepoch: %3d \t loss: %.3f \t critic_loss: %.9f \t return: %.3f \t ep_len: %.3f \t N_good: %d'%
-                (epoch, np.mean(batch_loss), critic_loss, np.mean(batch_rets), np.mean(batch_lens), N_good))
+            print('\nepoch: %3d \t loss: %.3f \t return: %.3f \t ep_len: %.3f \t N_good: %d'%
+                (epoch, np.mean(batch_loss), np.mean(batch_rets), np.mean(batch_lens), N_good))
             
             # current step: number of trajectories sampled
             step += round((Batch_size * self.world_size  + b * N_t) / (1 + self.world_size))
@@ -510,14 +470,14 @@ class Agent:
                 
     
     # validate the new model   
-    def start_validating(self,tb_logger = None, id = 0, render = False, run_id = 0, mode = 'human'):
+    def start_validating(self,tb_logger = None, id = 0, render = False, run_id = 0):
         print('\nValidating...', flush=True)
         
         val_ret = 0.0
         val_len = 0.0
         
         for _ in range(self.opts.val_size):
-            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, render = render, sample = False, mode = mode, save_dir = './outputs/', filename = f'gym_{run_id}_{_}.gif')
+            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, render = render, sample = False)
             val_ret += epi_ret
             val_len += epi_len
         
