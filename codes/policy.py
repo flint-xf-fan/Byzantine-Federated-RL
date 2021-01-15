@@ -208,12 +208,10 @@ class DiagonalGaussianMlpPolicy(nn.Module):
 
         # make policy network
         self.sizes = sizes
-        self.logits_net = mlp(self.sizes[:-1], self.activation)
-        self.mu_net = nn.Linear(self.sizes[-2],self.sizes[-1], bias = False)
-        self.log_sigma_net = nn.Linear(self.sizes[-2],self.sizes[-1], bias = False)
-
-        self.LOG_STD_MAX = -0.5
-        self.LOG_STD_MIN = -10
+        self.geer = geer
+        self.logits_net = mlp(self.sizes, self.activation, nn.Tanh)
+        self.log_sigma = nn.Parameter(torch.zeros(sizes[-1]))
+        
 
         self.init_parameters()
 
@@ -231,14 +229,14 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         """
 
         # forward pass the policy net
-        h_mu = self.logits_net(obs) 
+        logits = self.logits_net(obs) * self.geer
 
         # get the mu
-        mu = torch.tanh(self.mu_net(h_mu))
+        mu = logits
 
         # get the sigma
-        log_sigma = torch.clamp(self.log_sigma_net(h_mu), self.LOG_STD_MIN, self.LOG_STD_MAX)
-        sigma = torch.tanh(log_sigma.exp())
+        # log_sigma = torch.clamp(self.log_sigma_net(h_mu), self.LOG_STD_MIN, self.LOG_STD_MAX)
+        sigma = self.log_sigma.exp()
 
         # get the policy dist
         policy = Normal(mu, sigma)
@@ -253,10 +251,7 @@ class DiagonalGaussianMlpPolicy(nn.Module):
             else:
                 action = mu.detach()
                 
-        action = torch.clamp(action, -1, 1)
-        ll = policy.log_prob(action).sum()
-        
-        ll[ll < 1e-6] = 1e-6
+        ll = policy.log_prob(action)
         
         return action.numpy(), ll.sum()
     
