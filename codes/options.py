@@ -101,7 +101,55 @@ def get_options(args=None):
         opts.min_reward = 0
         opts.max_reward = 600
 
-   
+    if opts.env_name == 'Acrobot-v1':
+        opts.use_critic = False
+        opts.max_epi_len = 500  
+        opts.max_trajectories = 5000
+        opts.lr_model = 1e-3
+        opts.do_sample_for_training = True
+        opts.hidden_units = '16,16' #'16,16'
+        opts.B = 16
+        opts.b = 4
+        opts.N = 3
+        opts.Bmin = 12
+        opts.Bmax = 20
+        opts.gamma  = 0.999
+        opts.min_reward = 0
+        opts.max_reward = 600        
+        
+    if opts.env_name == 'LunarLander-v2':
+        opts.use_critic = False
+        opts.max_epi_len = 500  
+        opts.max_trajectories = 100000
+        opts.lr_model = 1e-3
+        opts.do_sample_for_training = True
+        opts.hidden_units = '16,16' #'16,16'
+        opts.B = 16
+        opts.b = 4
+        opts.N = 3
+        opts.Bmin = 12
+        opts.Bmax = 20
+        opts.gamma  = 0.99
+        opts.min_reward = -1200
+        opts.max_reward = 500  
+
+        
+    if opts.env_name == 'BipedalWalker-v3':
+        opts.use_critic = False
+        opts.max_epi_len = 500  
+        opts.max_trajectories = 100000
+        opts.lr_model = 1e-3
+        opts.do_sample_for_training = True
+        opts.hidden_units = '16,16' #'16,16'
+        opts.B = 16
+        opts.b = 4
+        opts.N = 3
+        opts.Bmin = 12
+        opts.Bmax = 20
+        opts.gamma  = 0.99
+        opts.min_reward = -1200
+        opts.max_reward = 500         
+        
     if opts.env_name == 'MountainCarContinuous-v0':
         opts.use_critic = False
         opts.max_epi_len =1000  
