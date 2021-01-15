@@ -191,33 +191,31 @@ class DiagonalGaussianMlpPolicy(nn.Module):
                  activation = 'Tanh',
                  output_activation = 'Tanh',
                  geer = 1):
-        
+
         super(DiagonalGaussianMlpPolicy, self).__init__()
-        
+
         # store parameters
         self.activation = activation
         self.output_activation = output_activation
-        
+
         if activation == 'Tanh':
             self.activation = nn.Tanh
         elif activation == 'ReLU':
             self.activation = nn.ReLU
         else:
             raise NotImplementedError
-            
-            
+
+
         # make policy network
         self.sizes = sizes
         self.logits_net = mlp(self.sizes[:-1], self.activation)
         self.mu_net = nn.Linear(self.sizes[-2],self.sizes[-1], bias = False)
         self.log_sigma_net = nn.Linear(self.sizes[-2],self.sizes[-1], bias = False)
-        
-        self.LOG_STD_MAX = 2
-        self.LOG_STD_MIN = -20
+
+        self.LOG_STD_MAX = -0.5
+        self.LOG_STD_MIN = -10
 
         self.init_parameters()
-        
-        self.geer = geer
 
     def init_parameters(self):
 
@@ -231,31 +229,36 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         :param input: (obs) input observation
         :return: action
         """
-        
+
         # forward pass the policy net
         h_mu = self.logits_net(obs) 
 
         # get the mu
-        mu = torch.tanh(self.mu_net(h_mu)) * self.geer
-        
+        mu = torch.tanh(self.mu_net(h_mu))
+
         # get the sigma
         log_sigma = torch.clamp(self.log_sigma_net(h_mu), self.LOG_STD_MIN, self.LOG_STD_MAX)
         sigma = torch.tanh(log_sigma.exp())
-        
+
         # get the policy dist
         policy = Normal(mu, sigma)
-        
+
         # take the pre-set action
         if fixed_action is not None:
             action = torch.tensor(fixed_action, device = obs.device)
         else:
             if sample:
                 action = policy.sample()
-                    
+
             else:
                 action = mu.detach()
+                
+        action = torch.clamp(action, -1, 1)
+        ll = policy.log_prob(action).sum()
         
-        return action.numpy(), policy.log_prob(action).sum()
+        ll[ll < 1e-6] = 1e-6
+        
+        return action.numpy(), ll.sum()
     
     
 class LinearCritic(nn.Module):

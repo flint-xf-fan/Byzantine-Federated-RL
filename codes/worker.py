@@ -169,7 +169,7 @@ class Worker:
             ep_rew.append(rew)
 
         if mode == 'rgb': save_frames_as_gif(frames, save_dir, filename)
-        print('reward:', np.sum(ep_rew), 'ep_len', len(ep_rew))
+        #print('reward:', np.sum(ep_rew), 'ep_len', len(ep_rew))
         return np.sum(ep_rew), len(ep_rew), ep_rew
     
     def config(self):
@@ -191,7 +191,7 @@ class Worker:
             self.env.configure(config)
         
     
-    def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0.1):
+    def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0):
         self.config()
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
