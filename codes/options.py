@@ -237,16 +237,16 @@ def get_options(args=None):
     elif opts.env_name == 'HalfCheetah-v2':
         opts.use_critic = False
         opts.max_epi_len = 1000  
-        opts.max_trajectories = 10000
+        opts.max_trajectories = 1e7
         opts.lr_model = 3e-4 # 4e-3
         opts.lr_critic = 1e-3
         opts.hidden_units = '64,64'
         opts.do_sample_for_training = True
-        opts.B = 32
-        opts.b = 16
-        opts.N = 3
-        opts.Bmin = 30
-        opts.Bmax = 34
+        opts.B = 80
+        opts.b = 8
+        opts.N = 12
+        opts.Bmin = 78
+        opts.Bmax = 82
         opts.gamma  = 0.999
         opts.min_reward = -2000
         opts.max_reward = 4000
@@ -254,6 +254,22 @@ def get_options(args=None):
         opts.delta = 0.6
         opts.sigma = 0.04
 
+    if opts.env_name == 'BipedalWalker-v3':
+        opts.use_critic = False
+        opts.max_epi_len = 500  
+        opts.max_trajectories = 1e7
+        opts.lr_model = 3e-4 
+        opts.do_sample_for_training = True
+        opts.hidden_units = '64,64' #'16,16'
+        opts.B = 80
+        opts.b = 8
+        opts.N = 12
+        opts.Bmin = 78
+        opts.Bmax = 82
+        opts.gamma  = 0.99
+        opts.min_reward = -1200
+        opts.max_reward = 500         
+        
         # opts.max_epi_len = 1000  
         # opts.max_trajectories = 10000
         # opts.lr_model = 3e-3 # 4
@@ -312,21 +328,6 @@ def get_options(args=None):
         opts.max_reward = 500  
 
 
-    if opts.env_name == 'BipedalWalker-v3':
-        opts.use_critic = False
-        opts.max_epi_len = 500  
-        opts.max_trajectories = 100000
-        opts.lr_model = 1e-3
-        opts.do_sample_for_training = True
-        opts.hidden_units = '16,16' #'16,16'
-        opts.B = 16
-        opts.b = 4
-        opts.N = 3
-        opts.Bmin = 12
-        opts.Bmax = 20
-        opts.gamma  = 0.99
-        opts.min_reward = -1200
-        opts.max_reward = 500         
 
     # if opts.with_filter:
     #     assert opts.delta * opts.B / (np.exp(2 * (1 - 2 * opts.delta))) <= 2 * opts.num_worker / opts.delta, \

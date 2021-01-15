@@ -191,7 +191,7 @@ class Worker:
             self.env.configure(config)
         
     
-    def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0):
+    def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0.1):
         self.config()
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
