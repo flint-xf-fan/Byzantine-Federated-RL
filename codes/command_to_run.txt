@@ -17,9 +17,21 @@ python run.py --env_name BipedalWalker-v3 --num_worker 10 --run_name Exp1_Bipeda
 
 
 
-python run.py --env_name Swimmer-v2 --num_worker 1 --run_name Exp1_BipedalWalker_VPG_W1 --multiple_run 10 --log_dir logs_BipedalWalker-v3
-python run.py --env_name Swimmer-v2 --num_worker 1 --run_name Exp1_BipedalWalker_SVRG_W1 --svrg --multiple_run 10 --log_dir logs_BipedalWalker-v3
-python run.py --env_name Swimmer-v2 --num_worker 1 --run_name Exp1_BipedalWalker_Ours_W1 --scsg --multiple_run 10 --log_dir logs_BipedalWalker-v3
+python run.py --env_name Walker2d-v2 --num_worker 1 --run_name Exp1_Walker2d_VPG_W1 --multiple_run 10 --log_dir logs_Walker2d
+python run.py --env_name Walker2d-v2 --num_worker 1 --run_name Exp1_Walker2d_SVRG_W1 --svrg --multiple_run 10 --log_dir logs_Walker2d
+python run.py --env_name Walker2d-v2 --num_worker 1 --run_name Exp1_Walker2d_Ours_W1 --scsg --multiple_run 10 --log_dir logs_Walker2d
+python run.py --env_name Walker2d-v2 --num_worker 5 --run_name Exp1_Walker2d_Ours_W5 --scsg --multiple_run 10 --log_dir logs_Walker2d
+python run.py --env_name Walker2d-v2 --num_worker 10 --run_name Exp1_Walker2d_Ours_W10 --scsg --multiple_run 10 --log_dir logs_Walker2d
 
-python run.py --env_name Swimmer-v2 --num_worker 5 --run_name Exp1_BipedalWalker_Ours_W5 --scsg --multiple_run 10 --log_dir logs_BipedalWalker-v3
-python run.py --env_name BipedalWalker-v3 --num_worker 10 --run_name Exp1_BipedalWalker_Ours_W10 --scsg --multiple_run 10 --log_dir logs_BipedalWalker-v3
+python run.py --env_name Swimmer-v2 --num_worker 1 --run_name Exp1_Swimmer_VPG_W1 --multiple_run 10 --log_dir logs_Swimmer
+python run.py --env_name Swimmer-v2 --num_worker 1 --run_name Exp1_Swimmer_SVRG_W1 --svrg --multiple_run 10 --log_dir logs_Swimmer
+python run.py --env_name Swimmer-v2 --num_worker 1 --run_name Exp1_Swimmer_Ours_W1 --scsg --multiple_run 10 --log_dir logs_Swimmer
+python run.py --env_name Swimmer-v2 --num_worker 5 --run_name Exp1_Swimmer_Ours_W5 --scsg --multiple_run 10 --log_dir logs_Swimmer
+python run.py --env_name Swimmer-v2 --num_worker 10 --run_name Exp1_Swimmer_Ours_W10 --scsg --multiple_run 10 --log_dir logs_Swimmer
+
+
+python run.py --env_name Pong-ram-v0 --num_worker 1 --run_name Exp1_Pong_VPG_W1 --multiple_run 10 --log_dir logs_Pong
+python run.py --env_name Pong-ram-v0 --num_worker 1 --run_name Exp1_Pong_SVRG_W1 --svrg --multiple_run 10 --log_dir logs_Pong
+python run.py --env_name Pong-ram-v0 --num_worker 1 --run_name Exp1_Pong_Ours_W1 --scsg --multiple_run 10 --log_dir logs_Pong
+python run.py --env_name Pong-ram-v0 --num_worker 5 --run_name Exp1_Pong_Ours_W5 --scsg --multiple_run 10 --log_dir logs_Pong
+python run.py --env_name Pong-ram-v0 --num_worker 10 --run_name Exp1_Pong_Ours_W10 --scsg --multiple_run 10 --log_dir logs_Pong
