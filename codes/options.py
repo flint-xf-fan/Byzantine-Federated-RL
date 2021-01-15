@@ -43,7 +43,7 @@ def get_options(args=None):
     
     
     # policy net
-    parser.add_argument('--activation', default='ReLU')
+    parser.add_argument('--activation', default='Tanh')
     parser.add_argument('--output_activation', default='Tanh')
     
     
@@ -103,6 +103,7 @@ def get_options(args=None):
         opts.alpha = 0.4
         opts.delta = 0.6
         opts.sigma = 0.06
+        opts.activation = 'ReLU'
 
    
     if opts.env_name == 'MountainCarContinuous-v0':
@@ -193,7 +194,7 @@ def get_options(args=None):
         opts.use_critic = False
         opts.max_epi_len = 100  
         opts.max_trajectories =30000
-        opts.lr_model = 1e-3
+        opts.lr_model = 1e-5
         opts.do_sample_for_training = True
         opts.hidden_units = '64,64'
         opts.B = 32
@@ -252,7 +253,8 @@ def get_options(args=None):
         opts.max_reward = 4000
         opts.alpha = 0.4
         opts.delta = 0.6
-        opts.sigma = 0.04
+        opts.sigma = 0.1
+        opts.activation = 'Tanh'
 
         # opts.max_epi_len = 1000  
         # opts.max_trajectories = 10000
@@ -316,7 +318,7 @@ def get_options(args=None):
         opts.use_critic = False
         opts.max_epi_len = 1000  
         opts.max_trajectories = 10000
-        opts.lr_model = 3e-4 # 4e-3
+        opts.lr_model = 1e-5 # 4e-3
         opts.lr_critic = 1e-3
         opts.hidden_units = '64,64'
         opts.do_sample_for_training = True
@@ -330,7 +332,8 @@ def get_options(args=None):
         opts.max_reward = 4000
         opts.alpha = 0.4
         opts.delta = 0.6
-        opts.sigma = 0.08
+        opts.sigma = 0.15
+        opts.activation = 'Tanh'
      
 
     # if opts.with_filter:
