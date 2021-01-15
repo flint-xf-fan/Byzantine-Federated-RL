@@ -183,7 +183,6 @@ class MlpPolicy(nn.Module):
             action = policy.probs.argmax()
         
         return action.item(), policy.log_prob(action)
-        
 
 class DiagonalGaussianMlpPolicy(nn.Module):
     def __init__(self,
@@ -209,10 +208,12 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         # make policy network
         self.sizes = sizes
         self.geer = geer
-        self.logits_net = mlp(self.sizes, self.activation, nn.Tanh)
-        self.log_sigma = nn.Parameter(torch.zeros(sizes[-1]))
+        self.logits_net = mlp(self.sizes[:-1], self.activation, nn.Identity)
+        self.mu_net = nn.Linear(self.sizes[-2], self.sizes[-1], bias = False)
+        self.log_sigma_net = nn.Linear(self.sizes[-2], self.sizes[-1], bias = False)
+        self.LOG_SIGMA_MIN = -10
+        self.LOG_SIGMA_MAX = -0.5
         
-
         self.init_parameters()
 
     def init_parameters(self):
@@ -229,14 +230,13 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         """
 
         # forward pass the policy net
-        logits = self.logits_net(obs) * self.geer
+        logits = self.logits_net(obs)
 
         # get the mu
-        mu = logits
+        mu = torch.tanh(self.mu_net(logits)) * self.geer
 
         # get the sigma
-        # log_sigma = torch.clamp(self.log_sigma_net(h_mu), self.LOG_STD_MIN, self.LOG_STD_MAX)
-        sigma = self.log_sigma.exp()
+        sigma = torch.tanh(torch.clamp(self.log_sigma_net(logits), self.LOG_SIGMA_MIN, self.LOG_SIGMA_MAX).exp())
 
         # get the policy dist
         policy = Normal(mu, sigma)
@@ -252,8 +252,81 @@ class DiagonalGaussianMlpPolicy(nn.Module):
                 action = mu.detach()
                 
         ll = policy.log_prob(action)
+        ll[ll < -1e5] = -1e5
+        
         
         return action.numpy(), ll.sum()
+
+# class DiagonalGaussianMlpPolicy(nn.Module):
+#     def __init__(self,
+#                  sizes,
+#                  activation = 'Tanh',
+#                  output_activation = 'Tanh',
+#                  geer = 1):
+
+#         super(DiagonalGaussianMlpPolicy, self).__init__()
+
+#         # store parameters
+#         self.activation = activation
+#         self.output_activation = output_activation
+
+#         if activation == 'Tanh':
+#             self.activation = nn.Tanh
+#         elif activation == 'ReLU':
+#             self.activation = nn.ReLU
+#         else:
+#             raise NotImplementedError
+
+
+#         # make policy network
+#         self.sizes = sizes
+#         self.geer = geer
+#         self.logits_net = mlp(self.sizes, self.activation, nn.Tanh)
+#         self.log_sigma = nn.Parameter(torch.zeros(sizes[-1]) - 0.5)
+        
+
+#         self.init_parameters()
+
+#     def init_parameters(self):
+
+#         for param in self.parameters():
+#             stdv = 1. / math.sqrt(param.size(-1))
+#             param.data.uniform_(-stdv, stdv)
+
+
+#     def forward(self, obs, sample = True, fixed_action = None):
+#         """
+#         :param input: (obs) input observation
+#         :return: action
+#         """
+
+#         # forward pass the policy net
+#         logits = self.logits_net(obs) * self.geer
+
+#         # get the mu
+#         mu = logits
+
+#         # get the sigma
+#         # log_sigma = torch.clamp(self.log_sigma_net(h_mu), self.LOG_STD_MIN, self.LOG_STD_MAX)
+#         sigma = self.log_sigma.exp()
+#         # print(sigma)
+
+#         # get the policy dist
+#         policy = Normal(mu, sigma)
+
+#         # take the pre-set action
+#         if fixed_action is not None:
+#             action = torch.tensor(fixed_action, device = obs.device)
+#         else:
+#             if sample:
+#                 action = policy.sample()
+
+#             else:
+#                 action = mu.detach()
+                
+#         ll = policy.log_prob(action)
+        
+#         return action.numpy(), ll.sum()
     
     
 class LinearCritic(nn.Module):

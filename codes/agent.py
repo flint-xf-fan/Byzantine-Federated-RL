@@ -416,23 +416,23 @@ class Agent:
                 b = 0
                 N_t = 0
                 
-                # take a gradient step
-                self.optimizer.step()  
-                
                 # perform gradient descent with mu vector
                 for idx,item in enumerate(self.master.parameters()):
                     item.grad = mu[idx]
                     grad_array += (item.grad.data.view(-1).cpu().tolist())
                     
-            # sample b trajectory using the latest policy (\theta_n) of master node
-            self.master.collect_experience_for_training(32, 
-                                                        opts.device, 
-                                                        record = False,
-                                                        sample = opts.do_sample_for_training,
-                                                        critic_loss = True)
-
+                # take a gradient step
+                self.optimizer.step()  
+                    
             ###############
             if self.opts.use_critic :#and epoch % 2 == 0:
+                # sample b trajectory using the latest policy (\theta_n) of master node
+                self.master.collect_experience_for_training(32, 
+                                                            opts.device, 
+                                                            record = False,
+                                                            sample = opts.do_sample_for_training,
+                                                        critic_loss = True)
+
                 
                 input_value = torch.as_tensor(self.master.input_value).view(len(self.master.input_value), -1).numpy()
                 output_value = torch.as_tensor(self.master.output_value).view(-1, 1).numpy()

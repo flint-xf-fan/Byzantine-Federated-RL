@@ -192,7 +192,7 @@ class Worker:
         
     
 
-    def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0.05):
+    def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0.2): #0.05
         self.config()
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
@@ -284,7 +284,7 @@ class Worker:
                     
                 #########
                 else:
-                    advantage = (returns - returns.mean()) / (returns.std() + 1e-5)
+                    advantage = (returns - returns.mean()) / (returns.std() + 1e-20)
                 
                 batch_weights += advantage
 
