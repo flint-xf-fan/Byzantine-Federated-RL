@@ -171,6 +171,7 @@ class Agent:
         # for storing number of trajectories sampled
         step = 0
         epoch = 0
+        ratios_step = 0
         
         # Start the training loop
         while step <= opts.max_trajectories:
@@ -395,18 +396,24 @@ class Agent:
                             old_logp.append(old_log_prob)
                         old_logp = torch.stack(old_logp)
                         
+                        # Finding the ratio (pi_theta / pi_theta__old):
+                        # print(old_logp, new_logp)
+                        ratios = torch.exp(old_logp.detach() - new_logp.detach())
+                        ratios_step += 1
+                        
                         # calculate gradient for the old policy (\theta_0)
-                        loss_old = -(old_logp * weights).mean()
+                        loss_old = -(old_logp * weights * ratios).mean()
                         self.old_master.logits_net.zero_grad()
                         loss_old.backward()
                         grad_old = [item.grad for item in self.old_master.parameters()]   
+                    
                         
-                        # Finding the ratio (pi_theta / pi_theta__old):
-                        ratios = torch.exp(old_logp.detach().sum() - new_logp.detach().sum())
+                        if tb_logger is not None:
+                            tb_logger.add_scalar(f'params/ratios_{run_id}', ratios.mean(), ratios_step)
                         
                         # adjust and set the gradient for latest policy (\theta_n)
                         for idx,item in enumerate(self.master.parameters()):
-                            item.grad = item.grad - ratios * grad_old[idx] + mu[idx]  # if mu is None, use grad from master 
+                            item.grad = item.grad -  grad_old[idx] + mu[idx]  # if mu is None, use grad from master 
                             grad_array += (item.grad.data.view(-1).cpu().tolist())
                 
                     # take a gradient step
@@ -416,6 +423,8 @@ class Agent:
                 
                 b = 0
                 N_t = 0
+                
+                ratios = torch.tensor(0.)
                 
                 # perform gradient descent with mu vector
                 for idx,item in enumerate(self.master.parameters()):
@@ -465,6 +474,7 @@ class Agent:
                 # optimizer log
                 tb_logger.add_scalar(f'params/lr_{run_id}', self.optimizer.param_groups[0]['lr'], step)
                 tb_logger.add_scalar(f'params/N_t_{run_id}', N_t, step)
+
                 # Byzantine filtering log
                 if opts.with_filter:
                     
