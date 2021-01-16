@@ -44,7 +44,7 @@ def worker_run(worker, param, param_for_critic, opts, Batch_size, seed):
     worker.env.seed(seed)
     
     # get returned gradients and info from all agents        
-    out = worker.train_one_epoch(Batch_size, opts.device, opts.do_sample_for_training)
+    out = worker.train_one_epoch(Batch_size, opts.device, opts.do_sample_for_training, opts.epsilon)
     
     # store all values
     return out
@@ -140,7 +140,7 @@ class Agent:
         print(' [*] Loading data from {}'.format(load_path))
         
     
-    def save(self, epoch):
+    def save(self, epoch, run_id):
         print('Saving model and state...')
         torch.save(
             {
@@ -150,7 +150,7 @@ class Agent:
                 'rng_state': torch.get_rng_state(),
                 'cuda_rng_state': torch.cuda.get_rng_state_all(),
             },
-            os.path.join(self.opts.save_dir, 'epoch-{}.pt'.format(epoch))
+            os.path.join(self.opts.save_dir, 'epoch-r{}-{}.pt'.format(run_id,epoch))
         )
     
     
@@ -367,7 +367,8 @@ class Agent:
                                                                                                                                  opts.device, 
                                                                                                                                  record = True,
                                                                                                                                  sample = opts.do_sample_for_training,
-                                                                                                                                 critic_loss = True)
+                                                                                                                                 critic_loss = True,
+                                                                                                                                 epsilon = 0)
                         
                     # ###############
                     # if self.opts.use_critic:
@@ -431,7 +432,8 @@ class Agent:
                                                             opts.device, 
                                                             record = False,
                                                             sample = opts.do_sample_for_training,
-                                                        critic_loss = True)
+                                                        critic_loss = True,
+                                                        epsilon = 0)
 
                 
                 input_value = torch.as_tensor(self.master.input_value).view(len(self.master.input_value), -1).numpy()
@@ -507,7 +509,7 @@ class Agent:
                             
             # save current model
             if opts.do_saving:
-                self.save(epoch)
+                self.save(epoch, run_id)
                 
     
     # validate the new model   
@@ -552,7 +554,7 @@ class Agent:
         l, h = st.norm.interval(0.90, loc=np.mean(y, axis = 0), scale=st.sem(y, axis = 0))
         
         plt.plot(mean)
-        plt.fill_between(range(self.opts.max_trajectories), l, h, alpha = 0.5)
+        plt.fill_between(range(int(self.opts.max_trajectories)), l, h, alpha = 0.5)
         
         axes = plt.axes()
         axes.set_ylim([self.opts.min_reward, self.opts.max_reward])

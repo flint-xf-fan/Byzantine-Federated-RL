@@ -191,8 +191,7 @@ class Worker:
             self.env.configure(config)
         
     
-
-    def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0.2): #0.05
+    def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0.05):
         self.config()
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
@@ -306,10 +305,10 @@ class Worker:
             return weights, logp, batch_rets, batch_lens
     
     
-    def train_one_epoch(self, B, device, sample):
+    def train_one_epoch(self, B, device, sample, epsilon):
         
         # collect experience by acting in the environment with current policy
-        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device, sample = sample)
+        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device, sample = sample, epsilon = epsilon)
         
         # calculate policy gradient loss
         batch_loss = -(logp * weights).mean()
