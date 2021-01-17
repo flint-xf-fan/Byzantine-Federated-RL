@@ -407,6 +407,9 @@ class Agent:
                         loss_old.backward()
                         grad_old = [item.grad for item in self.old_master.parameters()]   
                     
+                        if torch.abs(ratios.mean()) < 0.7 or torch.abs(ratios.mean()) > 1.3:
+                            N_t = n
+                            break
                         
                         if tb_logger is not None:
                             tb_logger.add_scalar(f'params/ratios_{run_id}', ratios.mean(), ratios_step)
@@ -415,7 +418,7 @@ class Agent:
                         for idx,item in enumerate(self.master.parameters()):
                             item.grad = item.grad -  grad_old[idx] + mu[idx]  # if mu is None, use grad from master 
                             grad_array += (item.grad.data.view(-1).cpu().tolist())
-                
+                        
                     # take a gradient step
                     self.optimizer.step()
         
@@ -513,7 +516,7 @@ class Agent:
                              
                 
             # do validating
-            eval_reward = self.start_validating(tb_logger, step, render = opts.render, run_id = run_id)
+            eval_reward = self.start_validating(tb_logger, step, max_steps = opts.val_max_steps, render = opts.render, run_id = run_id)
             if(tb_logger is not None):
                  self.memory.eval_values[run_id].append(eval_reward)
                             
@@ -523,14 +526,14 @@ class Agent:
                 
     
     # validate the new model   
-    def start_validating(self,tb_logger = None, id = 0, render = False, run_id = 0, mode = 'human'):
+    def start_validating(self,tb_logger = None, id = 0, max_steps = 1000, render = False, run_id = 0, mode = 'human'):
         print('\nValidating...', flush=True)
         
         val_ret = 0.0
         val_len = 0.0
         
         for _ in range(self.opts.val_size):
-            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, render = render, sample = False, mode = mode, save_dir = './outputs/', filename = f'gym_{run_id}_{_}.gif')
+            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, max_steps = max_steps, render = render, sample = False, mode = mode, save_dir = './outputs/', filename = f'gym_{run_id}_{_}.gif')
             val_ret += epi_ret
             val_len += epi_len
         

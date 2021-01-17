@@ -17,7 +17,7 @@ class HighwayEnv(AbstractEnv):
     staying on the rightmost lanes and avoiding collisions.
     """
 
-    RIGHT_LANE_REWARD: float = 0#1.0#0.1
+    RIGHT_LANE_REWARD: float = 1.0#1.0#0.1
     """The reward received when driving on the right-most lanes, linearly mapped to zero for other lanes."""
 
     HIGH_SPEED_REWARD: float = 3.0#2.0#5.0#1.0 #0.4

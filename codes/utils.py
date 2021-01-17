@@ -21,8 +21,8 @@ def env_wrapper(name, obs):
     if name == 'parking-v0':
         KEY_ORDER = ['observation', 'achieved_goal', 'desired_goal']
         return np.concatenate([obs[key] for key in KEY_ORDER])
-    elif name == 'highway-v0':
-        return np.transpose(np.array(obs, np.float32)).reshape(1,4,84,84)
+#     elif name == 'highway-v0':
+#         return np.transpose(np.array(obs, np.float32)).reshape(1,4,84,84)
     else:
         return obs
 

@@ -34,6 +34,8 @@ def get_options(args=None):
     # training and validating
     parser.add_argument('--val_size', type=int, default=10,
                         help='Number of episoid used for reporting validation performance')
+    parser.add_argument('--val_max_steps', type=int, default=1000)
+
     
     
     # Byzantine parameters
@@ -104,25 +106,26 @@ def get_options(args=None):
         opts.delta = 0.6
         opts.sigma = 0.06
         opts.activation = 'ReLU'
-        opts.epsilon = 0.2
+        opts.epsilon = 0.0
 
    
     if opts.env_name == 'MountainCarContinuous-v0':
         opts.use_critic = False
-        opts.max_epi_len =1000  
-        opts.max_trajectories =3000
-        opts.lr_model = 5e-3
+        opts.max_epi_len = 1000  
+        opts.max_trajectories = 1e4
+        opts.lr_model = 2e-3
         opts.do_sample_for_training = True
-        opts.hidden_units = '64,64'
+        opts.hidden_units = '8,8'
         opts.B = 32
-        opts.b = 4
+        opts.b = 16
         opts.N = 3
-        opts.Bmin = 12
-        opts.Bmax = 20
-        opts.gamma  = 0.995
+        opts.Bmin = 28
+        opts.Bmax = 34
+        opts.gamma  = 0.99
         opts.min_reward = 0
         opts.max_reward = 600 
-        opts.epsilon = 0.5
+        opts.epsilon = 0.0
+        opts.activation = 'Tanh'
         
     if opts.env_name == 'Pendulum-v0':
         opts.use_critic = False
@@ -139,7 +142,7 @@ def get_options(args=None):
         opts.gamma  = 0.99
         opts.min_reward = 0
         opts.max_reward = 600 
-        opts.epsilon = 0.5
+        opts.epsilon = 0.0
         
     elif opts.env_name == 'highway-v0':
         opts.use_critic = False
@@ -157,6 +160,8 @@ def get_options(args=None):
         opts.gamma  = 0.99
         opts.min_reward = 0
         opts.max_reward = 60
+        opts.epsilon = 0.0
+        opts.activation = 'Tanh'
     
     elif opts.env_name == 'merge-v0':
         opts.discrete = True
@@ -174,6 +179,7 @@ def get_options(args=None):
         opts.gamma  = 0.99
         opts.min_reward = 0
         opts.max_reward = 100
+        opts.epsilon = 0.0
     
     elif opts.env_name == 'roundabout-v0':
         opts.use_critic = False
@@ -191,6 +197,7 @@ def get_options(args=None):
         opts.gamma  = 0.99
         opts.min_reward = 0
         opts.max_reward = 60
+        opts.epsilon = 0.0
 
     elif opts.env_name == 'parking-v0':
         opts.discrete = False
@@ -208,6 +215,8 @@ def get_options(args=None):
         opts.gamma  = 0.99
         opts.min_reward = -100
         opts.max_reward = 0
+        opts.epsilon = 0.0
+        opts.activation = 'Tanh'
 
     elif opts.env_name == 'Hopper-v2':
         opts.use_critic = False
@@ -224,7 +233,7 @@ def get_options(args=None):
         opts.gamma  = 0.99
         opts.min_reward = 0
         opts.max_reward = 3500
-        opts.epsilon = 0.05
+        opts.epsilon = 0.0
 
         # opts.max_epi_len = 1000  
         # opts.max_trajectories = 30000
@@ -244,23 +253,23 @@ def get_options(args=None):
         # Parameters from YN
         opts.use_critic = False
         opts.max_epi_len = 1000  
-        opts.max_trajectories = 10000
-        opts.lr_model = 3e-4 # 4e-3
+        opts.max_trajectories = 1e4
+        opts.lr_model = 2e-4 # 4e-3
         opts.hidden_units = '64,64'
         opts.do_sample_for_training = True
         opts.B = 32
         opts.b = 16
-        opts.N = 3
-        opts.Bmin = 30
+        opts.N = 2
+        opts.Bmin = 28
         opts.Bmax = 34
-        opts.gamma  = 0.999
+        opts.gamma  = 0.99
         opts.min_reward = -2000
         opts.max_reward = 4000
         opts.alpha = 0.4
         opts.delta = 0.6
-        opts.sigma = 0.1
+        opts.sigma = 0.5
         opts.activation = 'Tanh'
-        opts.epsilon = 0.05
+        opts.epsilon = 0.0
         
         # opts.use_critic = False
         # opts.max_epi_len = 1000  
@@ -281,7 +290,7 @@ def get_options(args=None):
         # opts.delta = 0.6
         # opts.sigma = 0.1
         # opts.activation = 'Tanh'
-        # opts.epsilon = 0.01
+        # opts.epsilon = 0.0
 
         # Parameters from XF
         # opts.use_critic = False
@@ -303,49 +312,48 @@ def get_options(args=None):
         # opts.delta = 0.6
         # opts.sigma = 0.04   
         
-    elif opts.env_name == 'Walker2d-v2':
-        opts.use_critic = False
-        opts.max_epi_len = 1000  
-        opts.max_trajectories = 1e5
-        opts.lr_model = 3e-4 # 4e-3
-        opts.lr_critic = 1e-3
-        opts.hidden_units = '64,64'
-        opts.do_sample_for_training = True
-        opts.B = 32
-        opts.b = 18
-        opts.N = 2
-        opts.Bmin = 30
-        opts.Bmax = 34
-        opts.gamma  = 0.999
-        opts.min_reward = -2000
-        opts.max_reward = 4000
-        opts.alpha = 0.4
-        opts.delta = 0.6
-        opts.sigma = 0.04
-        opts.epsilon = 0.2
-        opts.activation = 'Tanh'
+#     elif opts.env_name == 'Walker2d-v2':
+#         opts.use_critic = False
+#         opts.max_epi_len = 1000  
+#         opts.max_trajectories = 1e5
+#         opts.lr_model = 5e-4 # 4e-3
+#         opts.hidden_units = '64,64'
+#         opts.do_sample_for_training = True
+#         opts.B = 32
+#         opts.b = 18
+#         opts.N = 3
+#         opts.Bmin = 28
+#         opts.Bmax = 34
+#         opts.gamma  = 0.99
+#         opts.min_reward = -2000
+#         opts.max_reward = 4000
+#         opts.alpha = 0.4
+#         opts.delta = 0.6
+#         opts.sigma = 0.04
+#         opts.epsilon = 0.0
+#         opts.activation = 'Tanh'
         
         
     elif opts.env_name == 'Swimmer-v2':
         opts.use_critic = False
         opts.max_epi_len = 1000  
-        opts.max_trajectories = 1e4
-        opts.lr_model = 3e-4 # 4e-3
+        opts.max_trajectories = 5e3
+        opts.lr_model = 2e-4 # 4e-3
         opts.hidden_units = '64,64'
         opts.do_sample_for_training = True
         opts.B = 32
-        opts.b = 18
+        opts.b = 16
         opts.N = 2
-        opts.Bmin = 30
+        opts.Bmin = 28
         opts.Bmax = 34
-        opts.gamma  = 0.995
-        opts.min_reward = -2000
-        opts.max_reward = 2000
+        opts.gamma  = 0.99
+        opts.min_reward = -500
+        opts.max_reward = 300
         opts.alpha = 0.4
         opts.delta = 0.6
-        opts.sigma = 0.1 #0.04
+        opts.sigma = 0.5 #0.04
         opts.activation = 'Tanh'
-        opts.epsilon = 0.05
+        opts.epsilon = 0.0
 
         # opts.max_epi_len = 1000  
         # opts.max_trajectories = 10000
@@ -379,7 +387,7 @@ def get_options(args=None):
         opts.max_trajectories = 5000
         opts.lr_model = 1e-3
         opts.do_sample_for_training = True
-        opts.hidden_units = '16,16' #'16,16'
+        opts.hidden_units = '64,64' #'16,16'
         opts.B = 16
         opts.b = 4
         opts.N = 3
@@ -388,31 +396,71 @@ def get_options(args=None):
         opts.gamma  = 0.999
         opts.min_reward = 0
         opts.max_reward = 600       
-        opts.epsilon = 0.05
+        opts.epsilon = 0.0
 
     if opts.env_name == 'LunarLander-v2':
+        
         opts.use_critic = False
-        opts.max_epi_len = 500  
-        opts.max_trajectories = 100000
-        opts.lr_model = 1e-3
+        opts.max_epi_len = 1000  
+        opts.max_trajectories = 1e4
+        opts.lr_model = 1e-3 # 8e-4
         opts.do_sample_for_training = True
-        opts.hidden_units = '16,16' #'16,16'
+        opts.hidden_units = '64,64'
         opts.B = 32
-        opts.b = 24
-        opts.N = 2
-        opts.Bmin = 30
-        opts.Bmax = 34
+        opts.b = 8 # 24
+        opts.N = 3
+        opts.Bmin = 26
+        opts.Bmax = 38
         opts.gamma  = 0.99
-        opts.min_reward = -1200
-        opts.max_reward = 500  
-        opts.epsilon = 0.2
+        opts.min_reward = -1000
+        opts.max_reward = 300  
+        opts.epsilon = 0.0 # 0.2, 0.03
+        opts.sigma = 0.07
+        opts.activation = 'Tanh'
+
+## current running
+#         opts.use_critic = False
+#         opts.max_epi_len = 1000  
+#         opts.max_trajectories = 1e4
+#         opts.lr_model = 1e-3 # 8e-4
+#         opts.do_sample_for_training = True
+#         opts.hidden_units = '64,64'
+#         opts.B = 32
+#         opts.b = 16 # 24
+#         opts.N = 2
+#         opts.Bmin = 28
+#         opts.Bmax = 34
+#         opts.gamma  = 0.99
+#         opts.min_reward = -1000
+#         opts.max_reward = 300  
+#         opts.epsilon = 0.0 # 0.2, 0.03
+#         opts.sigma = 0.07
+#         opts.activation = 'Tanh'
+
+## best so far
+#         opts.use_critic = False
+#         opts.max_epi_len = 500  
+#         opts.max_trajectories = 100000
+#         opts.lr_model = 5e-4
+#         opts.do_sample_for_training = True
+#         opts.hidden_units = '64,64' #'16,16'
+#         opts.B = 32
+#         opts.b = 24
+#         opts.N = 2
+#         opts.Bmin = 30
+#         opts.Bmax = 34
+#         opts.gamma  = 0.99
+#         opts.min_reward = -2000
+#         opts.max_reward = 300  
+#         opts.epsilon = 0.0
+#         opts.activation = 'Tanh'
 
 
     if opts.env_name == 'BipedalWalker-v3':
         opts.use_critic = False
         opts.max_epi_len = 1000  
         opts.max_trajectories = 10000
-        opts.lr_model = 1e-4 # 4e-3
+        opts.lr_model = 5e-4 # 4e-3
         opts.hidden_units = '64,64'
         opts.do_sample_for_training = True
         opts.B = 32
@@ -426,29 +474,52 @@ def get_options(args=None):
         opts.alpha = 0.4
         opts.delta = 0.6
         opts.sigma = 0.15
-        opts.activation = 'Tanh'
-        opts.epsilon = 0.05
+        opts.activation = 'ReLU'
+        opts.epsilon = 0.0
     
-    if opts.env_name == 'Pong-ram-v0':
+    if opts.env_name == 'Breakout-ram-v4':
         opts.use_critic = False
-        opts.max_epi_len = 1000  
+        opts.max_epi_len = 500  
         opts.max_trajectories = 1e5
-        opts.lr_model = 3e-4 # 4e-3
-        opts.lr_critic = 1e-3
-        opts.hidden_units = '64,32'
+        opts.lr_model = 2e-4 # 4e-3
+        opts.hidden_units = '64,64'
         opts.do_sample_for_training = True
-        opts.B = 80
-        opts.b = 8
-        opts.N = 12
-        opts.Bmin = 78
-        opts.Bmax = 82
+        opts.B = 32
+        opts.b = 24
+        opts.N = 2
+        opts.Bmin = 30
+        opts.Bmax = 34
         opts.gamma  = 0.999
         opts.min_reward = -2000
         opts.max_reward = 4000
         opts.alpha = 0.4
         opts.delta = 0.6
         opts.sigma = 0.04
-        opts.epsilon = 0.05
+        opts.epsilon = 0.0
+        opts.activation = 'Tanh'
+        opts.val_max_steps = 500
+    
+    if opts.env_name == 'SpaceInvaders-ram-v0':
+        opts.use_critic = False
+        opts.max_epi_len = 1000  
+        opts.max_trajectories = 1e5
+        opts.lr_model = 2e-4 # 4e-3
+        opts.hidden_units = '64,64'
+        opts.do_sample_for_training = True
+        opts.B = 32
+        opts.b = 24
+        opts.N = 2
+        opts.Bmin = 30
+        opts.Bmax = 34
+        opts.gamma  = 0.999
+        opts.min_reward = -2000
+        opts.max_reward = 4000
+        opts.alpha = 0.4
+        opts.delta = 0.6
+        opts.sigma = 0.04
+        opts.epsilon = 0.0
+        opts.activation = 'ReLU'
+        opts.val_max_steps = 500
      
 
     # if opts.with_filter:

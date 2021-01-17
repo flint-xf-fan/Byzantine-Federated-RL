@@ -86,10 +86,10 @@ class Worker:
                 hidden_sizes = list(eval(hidden_units))
                 self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
                 
-                if env_name == 'highway-v0':
-                    self.logits_net = CnnPolicy(self.sizes, activation, output_activation)
-                else:
-                    self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
+#                 if env_name == 'highway-v0':
+#                     self.logits_net = CnnPolicy(self.sizes, activation, output_activation)
+#                 else:
+                self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
                 
             else:
                 
@@ -145,18 +145,20 @@ class Worker:
         if self.use_critic:
             self.critic.set_parameters(param_for_critic)
     
-    def rollout(self, device, render = False, env = None, obs = None, sample = True, mode = 'human', save_dir = './', filename = '.'):
+    def rollout(self, device, max_steps = 1000, render = False, env = None, obs = None, sample = True, mode = 'human', save_dir = './', filename = '.'):
         
         if env is None and obs is None:
             env = self.env
-            self.config()
+#             self.config()
             obs = env.reset()
-        else:
-            self.config()
+#         else:
+#             self.config()
         done = False  
         ep_rew = []
         frames = []
-        while not done:
+        step = 0
+        while not done and step < max_steps:
+            step += 1
             if render:
                 if mode == 'rgb':
                     frames.append(env.render(mode="rgb_array"))
@@ -192,7 +194,7 @@ class Worker:
         
     
     def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0.05):
-        self.config()
+        #self.config()
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
         batch_rets = []         # for measuring episode returns

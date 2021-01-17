@@ -211,8 +211,8 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         self.logits_net = mlp(self.sizes[:-1], self.activation, nn.Identity)
         self.mu_net = nn.Linear(self.sizes[-2], self.sizes[-1], bias = False)
         self.log_sigma_net = nn.Linear(self.sizes[-2], self.sizes[-1], bias = False)
-        self.LOG_SIGMA_MIN = -10
-        self.LOG_SIGMA_MAX = -0.5
+        self.LOG_SIGMA_MIN = -20
+        self.LOG_SIGMA_MAX = -2
         
         self.init_parameters()
 
