@@ -1,0 +1,13 @@
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp2_LunarLander_VPG_W10B3 --multiple_run 10 --log_dir logs_EXP2LunarLander
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp2_LunarLander_SVRG_W10B3 --svrg  --multiple_run 10 --log_dir logs_EXP2LunarLander
+
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp2_LunarLander_Ours_W10B3 --with_filter --scsg --multiple_run 10 --log_dir logs_EXP2LunarLander
+python run.py --env_name LunarLander-v2 --num_worker 7 --run_name Exp2_LunarLander_Ours_W7B0 --with_filter --scsg --multiple_run 10 --log_dir logs_EXP2LunarLander
+
+
+
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp2_CartPole_VPG_W10B3 --multiple_run 10 --log_dir logs_EXP2CartPole
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp2_CartPole_SVRG_W10B3 --svrg  --multiple_run 10 --log_dir logs_EXP2CartPole
+
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp2_CartPole_Ours_W10B3 --with_filter --scsg --multiple_run 10 --log_dir logs_EXP2CartPole
+python run.py --env_name CartPole-v1 --num_worker 7 --run_name Exp2_CartPole_Ours_W7B0 --with_filter --scsg --multiple_run 10 --log_dir logs_EXP2CartPole
