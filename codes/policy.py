@@ -74,7 +74,6 @@ class CnnPolicy(nn.Module):
         :return: action
         """
         
-#         assert obs.shape == (84,84,4)
         x = obs
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
         # If the size is a square you can only specify a single number
@@ -85,7 +84,6 @@ class CnnPolicy(nn.Module):
         x = self.fc3(x)
         
         x = self.output_activation(x) * 10.
-        # print(x)
         
         # get the policy dist
         policy = Categorical(logits=x)
@@ -256,78 +254,6 @@ class DiagonalGaussianMlpPolicy(nn.Module):
         
         
         return action.numpy(), ll.sum()
-
-# class DiagonalGaussianMlpPolicy(nn.Module):
-#     def __init__(self,
-#                  sizes,
-#                  activation = 'Tanh',
-#                  output_activation = 'Tanh',
-#                  geer = 1):
-
-#         super(DiagonalGaussianMlpPolicy, self).__init__()
-
-#         # store parameters
-#         self.activation = activation
-#         self.output_activation = output_activation
-
-#         if activation == 'Tanh':
-#             self.activation = nn.Tanh
-#         elif activation == 'ReLU':
-#             self.activation = nn.ReLU
-#         else:
-#             raise NotImplementedError
-
-
-#         # make policy network
-#         self.sizes = sizes
-#         self.geer = geer
-#         self.logits_net = mlp(self.sizes, self.activation, nn.Tanh)
-#         self.log_sigma = nn.Parameter(torch.zeros(sizes[-1]) - 0.5)
-        
-
-#         self.init_parameters()
-
-#     def init_parameters(self):
-
-#         for param in self.parameters():
-#             stdv = 1. / math.sqrt(param.size(-1))
-#             param.data.uniform_(-stdv, stdv)
-
-
-#     def forward(self, obs, sample = True, fixed_action = None):
-#         """
-#         :param input: (obs) input observation
-#         :return: action
-#         """
-
-#         # forward pass the policy net
-#         logits = self.logits_net(obs) * self.geer
-
-#         # get the mu
-#         mu = logits
-
-#         # get the sigma
-#         # log_sigma = torch.clamp(self.log_sigma_net(h_mu), self.LOG_STD_MIN, self.LOG_STD_MAX)
-#         sigma = self.log_sigma.exp()
-#         # print(sigma)
-
-#         # get the policy dist
-#         policy = Normal(mu, sigma)
-
-#         # take the pre-set action
-#         if fixed_action is not None:
-#             action = torch.tensor(fixed_action, device = obs.device)
-#         else:
-#             if sample:
-#                 action = policy.sample()
-
-#             else:
-#                 action = mu.detach()
-                
-#         ll = policy.log_prob(action)
-        
-#         return action.numpy(), ll.sum()
-    
     
 class LinearCritic(nn.Module):
     def __init__(self,

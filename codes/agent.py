@@ -1,18 +1,18 @@
 import os
 import io
-from tqdm import tqdm
+import numpy as np
 import torch
 import torch.optim as optim
-import numpy as np
-from worker import Worker
-from utils import torch_load_cpu, get_inner_model
-from sklearn import metrics
 from torch.multiprocessing import Pool
+from tqdm import tqdm
+from sklearn import metrics
 from matplotlib import pyplot as plt
 from itertools import repeat
 from scipy.interpolate import Rbf
 import scipy.stats as st
-from utils import env_wrapper
+
+from worker import Worker
+from utils import torch_load_cpu, get_inner_model, env_wrapper
 
 class Memory:
     def __init__(self):
@@ -37,14 +37,14 @@ def euclidean_dist(x, y):
     dist = dist.sqrt()
     return dist
 
-def worker_run(worker, param, param_for_critic, opts, Batch_size, seed):
+def worker_run(worker, param, opts, Batch_size, seed):
     
     # distribute current parameters
-    worker.load_param_from_master(param, param_for_critic)
+    worker.load_param_from_master(param)
     worker.env.seed(seed)
     
     # get returned gradients and info from all agents        
-    out = worker.train_one_epoch(Batch_size, opts.device, opts.do_sample_for_training, opts.epsilon)
+    out = worker.train_one_epoch(Batch_size, opts.device, opts.do_sample_for_training)
     
     # store all values
     return out
@@ -120,10 +120,6 @@ class Agent:
         # load data for actor
         model_actor = get_inner_model(self.master.logits_net)
         model_actor.load_state_dict({**model_actor.state_dict(), **load_data.get('master', {})})
-        # load data for critic
-        # model_critic = get_inner_model(self.master.critic)
-        # model_critic.load_state_/dict({**model_critic.state_dict(), **load_data.get('critic', {})})
-        
         
         if not self.opts.eval_only:
             # load data for optimizer
@@ -145,12 +141,11 @@ class Agent:
         torch.save(
             {
                 'master': get_inner_model(self.master.logits_net).state_dict(),
-                'critic': get_inner_model(self.master.critic).state_dict() if self.opts.use_critic else None,
                 'optimizer': self.optimizer.state_dict(),
                 'rng_state': torch.get_rng_state(),
                 'cuda_rng_state': torch.cuda.get_rng_state_all(),
             },
-            os.path.join(self.opts.save_dir, 'epoch-r{}-{}.pt'.format(run_id,epoch))
+            os.path.join(self.opts.save_dir, 'r{}-epoch-{}.pt'.format(run_id,epoch))
         )
     
     
@@ -184,7 +179,7 @@ class Agent:
             self.train()
             
             # setup lr_scheduler
-            print("Training with lr={:.3e} for run {} (Critic = {})".format(self.optimizer.param_groups[0]['lr'], opts.run_name, opts.use_critic) , flush=True)
+            print("Training with lr={:.3e} for run {}".format(self.optimizer.param_groups[0]['lr'], opts.run_name) , flush=True)
             
             # some emplty list for training and logging purpose
             gradient = []
@@ -192,12 +187,8 @@ class Agent:
             batch_rets = []
             batch_lens = []
             
-            # distribute current x to all workers and collect the gradient from workers
+            # distribute current params and Batch_Size to all workers
             param = get_inner_model(self.master.logits_net).state_dict()
-            if self.opts.use_critic:
-                param_for_critic = self.master.critic.get_parameters()
-            else:
-                param_for_critic = None
             
             if opts.scsg:
                 Batch_size = np.random.randint(opts.Bmin, opts.Bmax + 1)
@@ -207,14 +198,13 @@ class Agent:
             seeds = np.random.randint(1,100000, self.world_size).tolist()
             args = zip(self.workers,
                        repeat(param),
-                       repeat(param_for_critic),
                        repeat(opts),
                        repeat(Batch_size),
                        seeds)
             
             results = self.pool.starmap(worker_run, args)
 
-            
+            #  collect the gradient(for training), loss(for logging only), returns(for logging only), and epi_length(for logging only) from workers         
             for out in tqdm(results, desc='Worker node'):
                 grad, loss, rets, lens = out
             
@@ -224,7 +214,9 @@ class Agent:
                 batch_loss.append(loss)
                 batch_rets.append(rets)
                 batch_lens.append(lens)
-
+            
+            
+            # simulate detect-attack (if needed) on server for demo
             if opts.attack_type == 'detect-attack' and opts.num_Byzantine > 0:  
                 for idx,_ in enumerate(self.master.parameters()):
                     tmp = []
@@ -238,28 +230,10 @@ class Agent:
 
                     for bad_worker in range(opts.num_Byzantine):
                         gradient[bad_worker][idx] = gradient[bad_worker][idx] + rnd
-            
-#            for worker in tqdm(self.workers, desc='Worker node'):
-#
-#                # distribute current parameters
-#                worker.load_param_from_master(param)
-#                
-#                # get returned gradients and info from all agents
-#                if opts.scsg:
-#                    Batch_size = np.random.randint(opts.Bmin, opts.Bmax + 1)
-#                else:
-#                    Batch_size = opts.B
-#                    
-#                grad, loss, rets, lens = worker.train_one_epoch(Batch_size, opts.device)
-#                
-#                # store all values
-#                gradient.append(grad)
-#                batch_loss.append(loss)
-#                batch_rets.append(rets)
-#                batch_lens.append(lens)
+
        
             # make the old policy as a copy of the current master node
-            self.old_master.load_param_from_master(param, param_for_critic)
+            self.old_master.load_param_from_master(param)
             
             # do filter step to detect Byzantine worker on master node if needed
             if opts.with_filter:
@@ -367,17 +341,8 @@ class Agent:
                     weights, new_logp, batch_rets, batch_lens, batch_states, batch_actions = self.master.collect_experience_for_training(b, 
                                                                                                                                  opts.device, 
                                                                                                                                  record = True,
-                                                                                                                                 sample = opts.do_sample_for_training,
-                                                                                                                                 critic_loss = True,
-                                                                                                                                 epsilon = 0)
+                                                                                                                                 sample = opts.do_sample_for_training)
                         
-                    # ###############
-                    # if self.opts.use_critic:
-                    #     input_value = torch.as_tensor(self.master.input_value).view(len(self.master.input_value), -1).numpy()
-                    #     output_value = torch.as_tensor(self.master.output_value).view(-1, 1).numpy()
-                    #     critic_loss = self.master.critic.fit(input_value, output_value)
-                    
-                    # ###############
                          
                     # calculate gradient for the new policy (\theta_n)
                     loss_new = -(new_logp * weights).mean()
@@ -407,7 +372,8 @@ class Agent:
                         loss_old.backward()
                         grad_old = [item.grad for item in self.old_master.parameters()]   
                     
-                        if torch.abs(ratios.mean()) < 0.7 or torch.abs(ratios.mean()) > 1.3:
+                        # early stop if ratio is not within [0.995, 1.005]
+                        if torch.abs(ratios.mean()) < 0.995 or torch.abs(ratios.mean()) > 1.005:
                             N_t = n
                             break
                         
@@ -416,7 +382,7 @@ class Agent:
                         
                         # adjust and set the gradient for latest policy (\theta_n)
                         for idx,item in enumerate(self.master.parameters()):
-                            item.grad = item.grad -  grad_old[idx] + mu[idx]  # if mu is None, use grad from master 
+                            item.grad = item.grad - grad_old[idx] + mu[idx]  # if mu is None, use grad from master 
                             grad_array += (item.grad.data.view(-1).cpu().tolist())
                         
                     # take a gradient step
@@ -427,8 +393,6 @@ class Agent:
                 b = 0
                 N_t = 0
                 
-                ratios = torch.tensor(0.)
-                
                 # perform gradient descent with mu vector
                 for idx,item in enumerate(self.master.parameters()):
                     item.grad = mu[idx]
@@ -436,30 +400,9 @@ class Agent:
                     
                 # take a gradient step
                 self.optimizer.step()  
-                    
-            ###############
-            if self.opts.use_critic :#and epoch % 2 == 0:
-                # sample b trajectory using the latest policy (\theta_n) of master node
-                self.master.collect_experience_for_training(32, 
-                                                            opts.device, 
-                                                            record = False,
-                                                            sample = opts.do_sample_for_training,
-                                                        critic_loss = True,
-                                                        epsilon = 0)
-
-                
-                input_value = torch.as_tensor(self.master.input_value).view(len(self.master.input_value), -1).numpy()
-                output_value = torch.as_tensor(self.master.output_value).view(-1, 1).numpy()
-
-                critic_loss = self.master.critic.fit(input_value, output_value)
-                # print(input_value, output_value)
-            else:
-                critic_loss = 0
             
-            ###############
-            
-            print('\nepoch: %3d \t loss: %.3f \t critic_loss: %.9f \t return: %.3f \t ep_len: %.3f \t N_good: %d'%
-                (epoch, np.mean(batch_loss), critic_loss, np.mean(batch_rets), np.mean(batch_lens), N_good))
+            print('\nepoch: %3d \t loss: %.3f \t return: %.3f \t ep_len: %.3f \t N_good: %d'%
+                (epoch, np.mean(batch_loss), np.mean(batch_rets), np.mean(batch_lens), N_good))
             
             # current step: number of trajectories sampled
             # step += max(Batch_size, b * N_t) if self.world_size > 1 else Batch_size + b * N_t
@@ -521,7 +464,7 @@ class Agent:
                  self.memory.eval_values[run_id].append(eval_reward)
                             
             # save current model
-            if opts.do_saving:
+            if not opts.no_saving:
                 self.save(epoch, run_id)
                 
     

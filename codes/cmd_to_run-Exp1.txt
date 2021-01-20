@@ -1,0 +1,19 @@
+python run.py --env_name HalfCheetah-v2 --num_worker 1 --run_name Exp1_HalfCheetah_VPG_W1 --multiple_run 10 --log_dir logs_HalfCheetah
+python run.py --env_name HalfCheetah-v2 --num_worker 1 --run_name Exp1_HalfCheetah_SVRG_W1 --svrg --multiple_run 10 --log_dir logs_HalfCheetah
+python run.py --env_name HalfCheetah-v2 --num_worker 1 --run_name Exp1_HalfCheetah_Ours_W1 --scsg --multiple_run 10 --log_dir logs_HalfCheetah
+python run.py --env_name HalfCheetah-v2 --num_worker 3 --run_name Exp1_HalfCheetah_Ours_W3 --scsg --multiple_run 10 --log_dir logs_HalfCheetah --with_filter
+python run.py --env_name HalfCheetah-v2 --num_worker 10 --run_name Exp1_HalfCheetah_Ours_W10 --scsg --multiple_run 10 --log_dir logs_HalfCheetah --with_filter
+
+
+python run.py --env_name LunarLander-v2 --num_worker 1 --run_name Exp1_LunarLander_VPG_W1 --multiple_run 10 --log_dir logs_LunarLander
+python run.py --env_name LunarLander-v2 --num_worker 1 --run_name Exp1_LunarLander_SVRG_W1 --svrg --multiple_run 10 --log_dir logs_LunarLander
+python run.py --env_name LunarLander-v2 --num_worker 1 --run_name Exp1_LunarLander_Ours_W1 --scsg --multiple_run 10 --log_dir logs_LunarLander
+python run.py --env_name LunarLander-v2 --num_worker 3 --run_name Exp1_LunarLander_Ours_W3 --scsg --multiple_run 10 --log_dir logs_LunarLander --with_filter
+python run.py --env_name LunarLander-v2 --num_worker 10 --run_name Exp1_LunarLander_Ours_W10_WithFilter --scsg --multiple_run 10 --log_dir logs_LunarLander --with_filter
+
+
+python run.py --env_name CartPole-v1 --num_worker 1 --run_name Exp1_Cartpole_VPG_W1 --multiple_run 10 --log_dir logs_Cartpole
+python run.py --env_name CartPole-v1 --num_worker 1 --run_name Exp1_Cartpole_SVRG_W1 --svrg --multiple_run 10 --log_dir logs_Cartpole
+python run.py --env_name CartPole-v1 --num_worker 1 --run_name Exp1_Cartpole_Ours_W1 --scsg --multiple_run 10 --log_dir logs_Cartpole
+python run.py --env_name CartPole-v1 --num_worker 3 --run_name Exp1_Cartpole_Ours_W3 --scsg --multiple_run 10 --log_dir logs_Cartpole --with_filter
+python run.py --env_name CartPole-v1 --num_worker 10 --run_name Exp1_Cartpole_Ours_W10_WithFilter --scsg --multiple_run 10 --log_dir logs_Cartpole --with_filter

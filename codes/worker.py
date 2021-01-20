@@ -39,120 +39,34 @@ class Worker:
         
         assert opts is not None
         
-        if opts.highway:
-            
-            if env_name == 'parking-v0':
-                self.env.configure({
-                    'vehicles_count': 1,
-                    "simulation_frequency": 10,
-                    "policy_frequency": 2,
-                    "duration": 100,
-                    "collision_reward" : -10,
-                    "reward_speed_range": [20, 40]
-                })
-            elif env_name == 'highway-v0':
-                pass
-            else:
-                self.env.configure({
-                        "observation": {
-                            "type": "Kinematics",
-                            "features": ["presence", "x", "y", "vx", "vy", "cos_h", "sin_h"],
-                            "features_range": {
-                                        "x": [-100, 100],
-                                        "y": [-100, 100],
-                                        "vx": [-20, 20],
-                                        "vy": [-20, 20]
-                                    },
-                            "absolute": False,
-                            "order": "sorted",
-                        },
-                        'vehicles_count': 10,
-                        "simulation_frequency": 10,
-                        "policy_frequency": 2,
-                        "duration": 100,
-                        "collision_reward" : -10,
-                        "reward_speed_range": [20, 40]
-                    })
-            if id==1: 
-                print('Env configuration for highway-env:',)
-                pprint.pprint(self.env.config)
-            obs = self.env.reset()
-                
-            if opts.discrete:
-                
-                obs_dim = obs.size
-                n_acts = self.env.action_space.n
-                
-                hidden_sizes = list(eval(hidden_units))
-                self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
-                
-#                 if env_name == 'highway-v0':
-#                     self.logits_net = CnnPolicy(self.sizes, activation, output_activation)
-#                 else:
-                self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
-                
-            else:
-                
-                obs = env_wrapper(opts.env_name, obs)                
-                obs_dim = obs.size
-                n_acts = self.env.action_space.shape[0]
-            
-                hidden_sizes = list(eval(hidden_units))
-                self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
-                
-                self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation)
-
-        
+        obs_dim = self.env.observation_space.shape[0]
+        if isinstance(self.env.action_space, Discrete):
+            n_acts = self.env.action_space.n
         else:
+            n_acts = self.env.action_space.shape[0]
         
-            obs_dim = self.env.observation_space.shape[0]
-            if isinstance(self.env.action_space, Discrete):
-                n_acts = self.env.action_space.n
-            else:
-                n_acts = self.env.action_space.shape[0]
-            
-            hidden_sizes = list(eval(hidden_units))
-            self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
-            
-            if isinstance(self.env.action_space, Discrete):
-                self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
-            else:
-                if self.env_name == 'Humanoid-v2':
-                    if id==1: print('geer = ', 0.4)
-                    self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation, geer = 0.4)
+        hidden_sizes = list(eval(hidden_units))
+        self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
         
-                elif self.env_name == 'Pendulum-v0':
-                    if id==1: print('geer = ', 2)
-                    self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation, geer = 2)
-                    
-                else:
-                    self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation,)
-        
-        ################
-        self.use_critic = opts.use_critic
-        if self.use_critic:
-            self.critic = LinearCritic(self.sizes)
-        ################
+        if isinstance(self.env.action_space, Discrete):
+            self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
+        else:
+            self.logits_net = DiagonalGaussianMlpPolicy(self.sizes, activation,)
         
         if self.id == 1:
             print(self.logits_net)
 
     
-    def load_param_from_master(self, param, param_for_critic):
+    def load_param_from_master(self, param):
         model_actor = get_inner_model(self.logits_net)
         model_actor.load_state_dict({**model_actor.state_dict(), **param})
-        
-        if self.use_critic:
-            self.critic.set_parameters(param_for_critic)
-    
+
     def rollout(self, device, max_steps = 1000, render = False, env = None, obs = None, sample = True, mode = 'human', save_dir = './', filename = '.'):
         
         if env is None and obs is None:
             env = self.env
-#             self.config()
             obs = env.reset()
-#         else:
-#             self.config()
+            
         done = False  
         ep_rew = []
         frames = []
@@ -174,26 +88,7 @@ class Worker:
         #print('reward:', np.sum(ep_rew), 'ep_len', len(ep_rew))
         return np.sum(ep_rew), len(ep_rew), ep_rew
     
-    def config(self):
-        if self.env_name == 'highway-v0':
-            screen_width, screen_height = 84, 84
-            config = {
-                "offscreen_rendering": True,
-                "observation": {
-                    "type": "GrayscaleObservation",
-                    "weights": [0.2989, 0.5870, 0.1140],  # weights for RGB conversion
-                    "stack_size": 4,
-                    "observation_shape": (screen_width, screen_height)
-                },
-                "screen_width": screen_width,
-                "screen_height": screen_height,
-                # "scaling": 1.75,
-                "policy_frequency": 2
-            }
-            self.env.configure(config)
-        
-    
-    def collect_experience_for_training(self, B, device, record = False, sample = True, critic_loss = False, epsilon = 0.05):
+    def collect_experience_for_training(self, B, device, record = False, sample = True):
         #self.config()
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
@@ -210,14 +105,6 @@ class Worker:
         if record:
             batch_states = []
             batch_actions = []
-        
-        #########
-        if self.use_critic:
-            critic_value = []
-            if critic_loss:
-                self.input_value = []
-                self.output_value = []
-        #########
 
         t = 1
         # collect experience by acting in the environment with current policy
@@ -228,25 +115,14 @@ class Worker:
             # act in the environment  
             obs = env_wrapper(self.env_name, obs)
             
-            if np.random.rand() < epsilon:
-                rnd_action = self.env.action_space.sample()
-            else:
-                rnd_action = None
-            
-            act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample, fixed_action = rnd_action)
-            #########
-            if self.use_critic:
-                in_, out_ = self.critic.predict(torch.as_tensor(obs, dtype=torch.float32).to(device), t)
-                critic_value.append(out_)
-                if critic_loss:
-                    self.input_value.append(in_)
-            #########
+            act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)
             obs, rew, done, info = self.env.step(act)
             t = t + 1
             
             # save action_log_prob, reward
             batch_log_prob.append(log_prob)
             ep_rews.append(rew)
+            
             # save trajectory
             if record:
                 batch_actions.append(act)
@@ -260,32 +136,13 @@ class Worker:
                 
                 # the weight for each logprob(a_t|s_T) is sum_t^T (gamma^(t'-t) * r_t')
                 returns = []
-                #########
-                if not done and self.use_critic:
-                    R = self.critic.predict(torch.as_tensor(obs, dtype=torch.float32).to(device), t)[1]
-                else:
-                    R = 0
-                #########
+                R = 0
                 for r in ep_rews[::-1]:
                     R = r + self.gamma * R
                     returns.insert(0, R)
-                #print(returns)
                 returns = torch.tensor(returns, dtype=torch.float32)
 
-                #########
-                if self.use_critic:
-                    critic_value_detach = torch.as_tensor(critic_value).view(-1)
-                        
-                    advantage = returns - critic_value_detach
-                    # print(advantage)
-                    # print(advantage)
-
-                    critic_value = []
-                    if critic_loss: self.output_value += returns.tolist()
-                    
-                #########
-                else:
-                    advantage = (returns - returns.mean()) / (returns.std() + 1e-20)
+                advantage = (returns - returns.mean()) / (returns.std() + 1e-20)
                 
                 batch_weights += advantage
 
@@ -307,10 +164,10 @@ class Worker:
             return weights, logp, batch_rets, batch_lens
     
     
-    def train_one_epoch(self, B, device, sample, epsilon):
+    def train_one_epoch(self, B, device, sample):
         
         # collect experience by acting in the environment with current policy
-        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device, sample = sample, epsilon = epsilon)
+        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device, sample = sample)
         
         # calculate policy gradient loss
         batch_loss = -(logp * weights).mean()
@@ -324,18 +181,6 @@ class Worker:
             # return wrong gradient with noise
             grad = []
             for item in self.parameters():
-                # rnd_11 = (torch.rand(item.grad.shape, device = item.device) * 2. - 1.)
-                # rnd_o = ((torch.rand(item.grad.shape, device = item.device) > 0.5).float())
-                # grad.append(item.grad + item.grad * rnd_11 * rnd_o * 2)  
-                
-                # item.grad[item.grad > item.grad.mean()] = -item.grad[item.grad > item.grad.mean()] * 2
-                # grad.append(item.grad)  
-
-                # rnd = torch.rand(item.grad.shape, device = item.device) * (item.grad.max().data - item.grad.min().data) + item.grad.min().data
-                # rnd2 = ((torch.rand(item.grad.shape, device = item.device) > 0.5).float())
-                # grad.append(item.grad + rnd * rnd2 * 5)    
-                # grad.append(rnd * 2 * rnd2)    
-
                 if self.attack_type == 'sign-flipping':
                     grad.append( - item.grad)  
 

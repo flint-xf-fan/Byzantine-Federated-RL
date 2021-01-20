@@ -11,10 +11,11 @@ import json
 import torch
 import pprint
 import numpy as np
+from torch.utils.tensorboard import SummaryWriter
+
 from agent import Agent
 from worker import Worker
 from options import get_options
-from torch.utils.tensorboard import SummaryWriter
 from utils import get_inner_model
 
 def run(opts):
@@ -29,7 +30,7 @@ def run(opts):
         tb_writer = None
 
     # Optionally configure tensorboard
-    if opts.do_saving and not os.path.exists(opts.save_dir):
+    if not opts.no_saving and not os.path.exists(opts.save_dir):
         os.makedirs(opts.save_dir)
 
     # Configure for multiple runs    
@@ -37,7 +38,7 @@ def run(opts):
     opts.seeds = np.arange(opts.multiple_run).tolist()
 
     # Save arguments so exact configuration can always be found
-    if opts.do_saving:
+    if not opts.no_saving:
         with open(os.path.join(opts.save_dir, "args.json"), 'w') as f:
             json.dump(vars(opts), f, indent=True)
 
@@ -52,6 +53,7 @@ def run(opts):
         # Set the random seed
         torch.manual_seed(opts.seed)
         np.random.seed(opts.seed)
+        
         # Load data from load_path
         if opts.load_path is not None:
             agent.load(opts.load_path)
@@ -75,11 +77,12 @@ def run(opts):
                 max_epi_len = opts.max_epi_len,
                 opts = opts
             ).to(opts.device)
-                    
+            
+            # Load data from random policy
             model_actor = get_inner_model(agent.master.logits_net)
             model_actor.load_state_dict({**model_actor.state_dict(), **get_inner_model(nn_parms_worker.logits_net).state_dict()})
         
-            # Starttraining here
+            # Start training here
             agent.start_training(tb_writer, run_id)
             if tb_writer:
                 agent.log_performance(tb_writer)
@@ -87,6 +90,7 @@ def run(opts):
 
 
 if __name__ == "__main__":
+    
     import warnings
     warnings.filterwarnings("ignore", category=Warning)
     os.environ['KMP_DUPLICATE_LIB_OK']='True'
