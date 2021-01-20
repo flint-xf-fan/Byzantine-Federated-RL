@@ -8,7 +8,6 @@ from copy import deepcopy
 import math
 import torch.optim as optim
 from utils import env_wrapper
-from highway_env import __init__
 import pprint
 
 class Worker:
