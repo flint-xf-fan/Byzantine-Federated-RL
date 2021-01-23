@@ -35,7 +35,7 @@ def run(opts):
 
     # Configure for multiple runs    
     assert opts.multiple_run > 0
-    opts.seeds = np.arange(opts.multiple_run).tolist()
+    opts.seeds = np.arange(opts.multiple_run).tolist() + opts.seed
 
     # Save arguments so exact configuration can always be found
     if not opts.no_saving:

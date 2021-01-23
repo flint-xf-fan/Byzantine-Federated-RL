@@ -20,7 +20,7 @@ def get_options(args=None):
     parser.add_argument('--eval_only', action='store_true', help='used only if to evaluate a model')
     parser.add_argument('--no_saving', action='store_true', help='Disable saving checkpoints')
     parser.add_argument('--no_tb', action='store_true', help='Disable Tensorboard logging')
-    parser.add_argument('--seed', type=int, default=1, help='Random seed to use for validating')
+    parser.add_argument('--seed', type=int, default=0, help='Random seed to use for starting')
     parser.add_argument('--render', action='store_true', help='render to view game')
     parser.add_argument('--mode', type=str, default='human')
     parser.add_argument('--multiple_run', type=int, default=1, help='number of repeat run')
