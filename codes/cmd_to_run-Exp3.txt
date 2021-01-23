@@ -1,14 +1,14 @@
 
-python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_DA --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type detect-attack
-python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_SF --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type sign-flipping
-python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_ZG --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type zero-gradient
-python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_RN --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type random-noise
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_DA --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3LunarLander --attack_type detect-attack
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_SF --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3LunarLander --attack_type sign-flipping
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_ZG --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3LunarLander --attack_type zero-gradient
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_RN --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3LunarLander --attack_type random-noise
 
 
-python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp3_CartPole_Ours_W10B3_DA --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type detect-attack
-python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp3_CartPole_Ours_W10B3_SF --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type sign-flipping
-python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp3_CartPole_Ours_W10B3_ZG --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type zero-gradient
-python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp3_CartPole_Ours_W10B3_RN --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type random-noise
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp3_CartPole_Ours_W10B3_DA --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3CartPole --attack_type detect-attack
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp3_CartPole_Ours_W10B3_SF --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3CartPole --attack_type sign-flipping
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp3_CartPole_Ours_W10B3_ZG --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3CartPole --attack_type zero-gradient
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp3_CartPole_Ours_W10B3_RN --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3CartPole --attack_type random-noise
 
 
 python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_HalfCheetah_Ours_W10B3_DA --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type detect-attack
