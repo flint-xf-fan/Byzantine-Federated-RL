@@ -216,8 +216,8 @@ class Agent:
                 batch_lens.append(lens)
             
             
-            # simulate detect-attack (if needed) on server for demo
-            if opts.attack_type == 'detect-attack' and opts.num_Byzantine > 0:  
+            # simulate filtering-attack (if needed) on server for demo
+            if opts.attack_type == 'filtering-attack' and opts.num_Byzantine > 0:  
                 for idx,_ in enumerate(self.master.parameters()):
                     tmp = []
                     for bad_worker in range(opts.num_Byzantine):
@@ -231,6 +231,7 @@ class Agent:
                     for bad_worker in range(opts.num_Byzantine):
                         gradient[bad_worker][idx] = gradient[bad_worker][idx] + rnd
 
+            # simulate variance-attack (if needed) on server for demo
             elif opts.attack_type == 'variance-attack' and opts.num_Byzantine > 0: 
                 for idx,_ in enumerate(self.master.parameters()):
                     tmp = []
