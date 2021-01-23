@@ -181,16 +181,19 @@ class Worker:
             grad = []
             for item in self.parameters():
                 if self.attack_type == 'sign-flipping':
-                    grad.append( - item.grad)  
+                    grad.append( - item.grad * 3.)  #### the number of Byzantine agents
 
-                elif self.attack_type == 'zero-gradient':
-                    grad.append( 0 * item.grad)
+#                 elif self.attack_type == 'zero-gradient':
+#                     grad.append( 0 * item.grad)
+                elif self.attack_type == 'variance-attack':
+                    grad.append(item.grad)
 
                 elif self.attack_type == 'random-noise':
-                    rnd = (torch.rand(item.grad.shape, device = item.device) * 2 - 1) * (item.grad.max().data - item.grad.min().data) 
+#                     rnd = (torch.rand(item.grad.shape, device = item.device) * 2 - 1) * (item.grad.max().data - item.grad.min().data) 
+                    rnd = torch.rand(item.grad.shape, device = item.device) * 20. - 10.
                     grad.append( item.grad + rnd)  
                 
-                elif self.attack_type == 'detect-attack':
+                elif self.attack_type == 'filtering-attack':
                     grad.append(item.grad)
                 
                 else: raise NotImplementedError()
