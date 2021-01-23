@@ -231,7 +231,17 @@ class Agent:
                     for bad_worker in range(opts.num_Byzantine):
                         gradient[bad_worker][idx] = gradient[bad_worker][idx] + rnd
 
-       
+            elif opts.attack_type == 'variance-attack' and opts.num_Byzantine > 0: 
+                for idx,_ in enumerate(self.master.parameters()):
+                    tmp = []
+                    for bad_worker in range(opts.num_Byzantine):
+                        tmp.append(gradient[bad_worker][idx].view(-1))
+                    tmp = torch.stack(tmp)
+              
+                    for bad_worker in range(opts.num_Byzantine):
+                        gradient[bad_worker][idx] = gradient[bad_worker][idx] + tmp.std(0).view(gradient[0][idx].shape)
+              
+              
             # make the old policy as a copy of the current master node
             self.old_master.load_param_from_master(param)
             
