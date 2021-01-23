@@ -240,7 +240,7 @@ class Agent:
                     tmp = torch.stack(tmp)
               
                     for bad_worker in range(opts.num_Byzantine):
-                        gradient[bad_worker][idx] = gradient[bad_worker][idx] - 2*tmp.std(0).view(gradient[0][idx].shape)
+                        gradient[bad_worker][idx] = tmp.mean(0).view(gradient[0][idx].shape) + 0.3*tmp.std(0).view(gradient[0][idx].shape)
               
               
             # make the old policy as a copy of the current master node
