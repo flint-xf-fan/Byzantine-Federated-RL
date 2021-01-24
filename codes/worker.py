@@ -55,7 +55,6 @@ class Worker:
         if self.id == 1:
             print(self.logits_net)
         
-        self.rew_min = None
         self.rew_max = None
 
     
@@ -129,14 +128,12 @@ class Worker:
                 rew = -rew
             
             elif attack_type is not None and self.attack_type == 'nosing-reward':
-                if self.rew_min is None:
-                    self.rew_min = rew
+                if self.rew_max is None:
                     self.rew_max = rew
                 else:
-                    self.rew_min = min(rew, self.rew_min)
-                    self.rew_max = max(rew, self.rew_max)
+                    self.rew_max = max(np.abs(rew), self.rew_max)
                     
-                    rew = (np.random.rand() * (self.rew_max - self.rew_min ) + self.rew_min)
+                    rew = np.random.rand() * 2 * self.rew_max - self.rew_ax)
                 
             t = t + 1
             
