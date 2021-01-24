@@ -133,7 +133,7 @@ class Worker:
                 else:
                     self.rew_max = max(np.abs(rew), self.rew_max)
                     rew = np.random.rand() * 2 * self.rew_max - self.rew_max)
-                
+    
             t = t + 1
             
             # save action_log_prob, reward
