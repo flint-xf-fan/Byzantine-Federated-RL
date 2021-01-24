@@ -126,7 +126,7 @@ class Worker:
             obs, rew, done, info = self.env.step(act)
             
             if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping': 
-                rew = -10 * rew
+                rew = -100 * rew
             
 #             elif attack_type is not None and self.attack_type == 'nosing-reward': # no need for this attack as we already have random noise
 #                 if self.rew_max is None:
