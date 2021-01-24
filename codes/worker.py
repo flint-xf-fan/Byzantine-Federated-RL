@@ -117,17 +117,18 @@ class Worker:
             obs = env_wrapper(self.env_name, obs)
             
             if self.is_Byzantine and attack_type is not None and self.attack_type == 'random-action':
-                act_rnd = self.env.action_space.sample()
-#                 act_rnd = np.zeros(len(self.env.action_space.sample()), dtype=np.float32)
+#                 act_rnd = self.env.action_space.sample()
+                act_rnd = np.zeros(len(self.env.action_space.sample()), dtype=np.float32) ################ a bug here for discrete action space but it works well for continuous! #######################
                 act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample, fixed_action = act_rnd)
             else:
                 act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)
            
             obs, rew, done, info = self.env.step(act)
             
-            if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping': 
-                rew = -100 * rew
-            
+#             if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping': 
+#                 rew = -100 * rew # I see why this cannot work as desired. ############ remember that our data points are trajectries not individual timesteps!!!! you shold consider to alter the ep returns
+                                 # or have to scale it. otherwise. it won't attack cos over the traj, the effect might just be reduce the value of the return. if it runs out sign is not changed, then no effect at all.
+                                 # different reward can induce the same policy. this is one issue in inverse RL. #################################
 #             elif attack_type is not None and self.attack_type == 'nosing-reward': # no need for this attack as we already have random noise
 #                 if self.rew_max is None:
 #                     self.rew_max = rew
@@ -139,7 +140,11 @@ class Worker:
             
             # save action_log_prob, reward
             batch_log_prob.append(log_prob)
-            ep_rews.append(rew)
+            
+            if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping':
+                ep_rews.append(-rew)
+            else:
+                ep_rews.append(rew)
             
             # save trajectory
             if record:
