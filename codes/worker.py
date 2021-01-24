@@ -124,15 +124,15 @@ class Worker:
            
             obs, rew, done, info = self.env.step(act)
             
-            if attack_type is not None and self.attack_type == 'reward-flipping':
+            if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping': 
                 rew = -rew
             
-            elif attack_type is not None and self.attack_type == 'nosing-reward':
-                if self.rew_max is None:
-                    self.rew_max = rew
-                else:
-                    self.rew_max = max(np.abs(rew), self.rew_max)
-                    rew = np.random.rand() * 2 * self.rew_max - self.rew_max
+#             elif attack_type is not None and self.attack_type == 'nosing-reward': # no need for this attack as we already have random noise
+#                 if self.rew_max is None:
+#                     self.rew_max = rew
+#                 else:
+#                     self.rew_max = max(np.abs(rew), self.rew_max)
+#                     rew = np.random.rand() * 2 * self.rew_max - self.rew_max
     
             t = t + 1
             
