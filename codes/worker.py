@@ -87,7 +87,7 @@ class Worker:
         #print('reward:', np.sum(ep_rew), 'ep_len', len(ep_rew))
         return np.sum(ep_rew), len(ep_rew), ep_rew
     
-    def collect_experience_for_training(self, B, device, record = False, sample = True):
+    def collect_experience_for_training(self, B, device, record = False, sample = True, attack_type = None):
         #self.config()
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
@@ -114,8 +114,17 @@ class Worker:
             # act in the environment  
             obs = env_wrapper(self.env_name, obs)
             
-            act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)
+            if attack_type is not None and self.attack_type == 'random-action':
+                act_rnd = self.env.action_space.sample()
+                act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample, fixed_action = act_rnd)
+            else:
+                act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)
+           
             obs, rew, done, info = self.env.step(act)
+            
+            if attack_type is not None and self.attack_type == 'flipping-reward':
+                rew = -rew
+                
             t = t + 1
             
             # save action_log_prob, reward
@@ -166,7 +175,7 @@ class Worker:
     def train_one_epoch(self, B, device, sample):
         
         # collect experience by acting in the environment with current policy
-        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device, sample = sample)
+        weights, logp, batch_rets, batch_lens = self.collect_experience_for_training(B, device, sample = sample, attack_type = self.attack_type)
         
         # calculate policy gradient loss
         batch_loss = -(logp * weights).mean()
@@ -180,21 +189,25 @@ class Worker:
             # return wrong gradient with noise
             grad = []
             for item in self.parameters():
-                if self.attack_type == 'sign-flipping':
-                    grad.append( - item.grad * 2.)  #### the number of Byzantine agents
-
-#                 elif self.attack_type == 'zero-gradient':
-#                     grad.append( 0 * item.grad)
+                if self.attack_type == 'reward-flipping':
+                    grad.append(item.grad)
+                    # refer to collect_experience_for_training() to see attack
+                
+                elif self.attack_type == 'random-action':
+                    grad.append(item.grad)
+                    # refer to collect_experience_for_training() to see attack
+                    
                 elif self.attack_type == 'variance-attack':
                     grad.append(item.grad)
+                    # refer to agent.py to see attack
 
                 elif self.attack_type == 'random-noise':
                     rnd = (torch.rand(item.grad.shape, device = item.device) * 2 - 1) * (item.grad.max().data - item.grad.min().data) * 3
-#                     rnd = torch.rand(item.grad.shape, device = item.device) * 20. - 10.
                     grad.append( item.grad + rnd)  
                 
                 elif self.attack_type == 'filtering-attack':
                     grad.append(item.grad)
+                    # refer to agent.py to see attack
                 
                 else: raise NotImplementedError()
 

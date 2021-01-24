@@ -34,7 +34,7 @@ def get_options(args=None):
     # Byzantine parameters
     parser.add_argument('--num_worker', type=int, default=10, help = 'number of worker node')
     parser.add_argument('--num_Byzantine', type=int, default=0, help = 'number of worker node that is Byzantine')
-    parser.add_argument('--attack_type', type=str, default='filtering-attack', choices = ['sign-flipping', 'variance-attack', 'random-noise', 'filtering-attack'], help = 'the attack type of a Byzantine worker')
+    parser.add_argument('--attack_type', type=str, default='filtering-attack', choices = ['random-action', 'reward-flipping', 'variance-attack', 'random-noise', 'filtering-attack'], help = 'the attack type of a Byzantine worker')
     
     
     # policy net
