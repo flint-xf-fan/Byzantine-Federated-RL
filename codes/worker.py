@@ -117,7 +117,8 @@ class Worker:
             obs = env_wrapper(self.env_name, obs)
             
             if self.is_Byzantine and attack_type is not None and self.attack_type == 'random-action':
-                act_rnd = self.env.action_space.sample()
+                #act_rnd = self.env.action_space.sample()
+                act_rnd = np.zeros(len(self.env.action_space.sample()), dtype=np.float32)
                 act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample, fixed_action = act_rnd)
             else:
                 act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)
@@ -125,7 +126,7 @@ class Worker:
             obs, rew, done, info = self.env.step(act)
             
             if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping': 
-                rew = -rew
+                rew = -10 * rew
             
 #             elif attack_type is not None and self.attack_type == 'nosing-reward': # no need for this attack as we already have random noise
 #                 if self.rew_max is None:
