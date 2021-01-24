@@ -54,6 +54,9 @@ class Worker:
         
         if self.id == 1:
             print(self.logits_net)
+        
+        self.rew_min = None
+        self.rew_max = None
 
     
     def load_param_from_master(self, param):
@@ -122,8 +125,22 @@ class Worker:
            
             obs, rew, done, info = self.env.step(act)
             
-            if attack_type is not None and self.attack_type == 'flipping-reward':
+            if attack_type is not None and self.attack_type == 'reward-flipping':
                 rew = -rew
+            
+            elif attack_type is not None and self.attack_type == 'nosing-reward':
+                if self.rew_min is None:
+                    self.rew_min = rew
+                    self.rew_max = rew
+                else:
+                    self.rew_min = min(rew, self.rew_min)
+                    self.rew_max = max(rew, self.rew_max)
+                    
+                    rew = (np.random.rand() * (self.rew_max - self.rew_min ) + self.rew_min)
+                    
+                    
+                    
+                rew = 
                 
             t = t + 1
             
@@ -192,6 +209,11 @@ class Worker:
                 if self.attack_type == 'reward-flipping':
                     grad.append(item.grad)
                     # refer to collect_experience_for_training() to see attack
+                
+                elif self.attack_type == 'nosing-reward':
+                    grad.append(item.grad)
+                    # refer to collect_experience_for_training() to see attack
+                    
                 
                 elif self.attack_type == 'random-action':
                     grad.append(item.grad)
