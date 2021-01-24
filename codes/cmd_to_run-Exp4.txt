@@ -2,3 +2,4 @@ python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_nam
 python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp4_CartPole_SVRG_W10B3_RF --svrg --multiple_run 10 --log_dir logs_EXP4CartPole --attack_type reward-flipping
 python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp4_CartPole_SVRG_W10B3_FA --svrg --multiple_run 10 --log_dir logs_EXP4CartPole --attack_type filtering-attack
 python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp4_CartPole_SVRG_W10B3_RN --svrg --multiple_run 10 --log_dir logs_EXP4CartPole --attack_type random-noise
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp4_CartPole_SVRG_W10B3_NR --svrg --multiple_run 10 --log_dir logs_EXP4CartPole --attack_type nosing-reward

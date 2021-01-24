@@ -137,10 +137,6 @@ class Worker:
                     self.rew_max = max(rew, self.rew_max)
                     
                     rew = (np.random.rand() * (self.rew_max - self.rew_min ) + self.rew_min)
-                    
-                    
-                    
-                rew = 
                 
             t = t + 1
             
