@@ -141,10 +141,7 @@ class Worker:
             # save action_log_prob, reward
             batch_log_prob.append(log_prob)
             
-            if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping':
-                ep_rews.append(-rew)
-            else:
-                ep_rews.append(rew)
+            ep_rews.append(rew)
             
             # save trajectory
             if record:
@@ -153,7 +150,10 @@ class Worker:
             if done or len(ep_rews) >= self.max_epi_len:
                 
                 # if episode is over, record info about episode
-                ep_ret, ep_len = sum(ep_rews), len(ep_rews)
+                if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping':
+                    ep_ret, ep_len = -sum(ep_rews), len(ep_rews)
+                else:
+                    ep_ret, ep_len = sum(ep_rews), len(ep_rews)
                 batch_rets.append(ep_ret)
                 batch_lens.append(ep_len)
                 
