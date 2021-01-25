@@ -151,7 +151,7 @@ class Worker:
                 
                 # if episode is over, record info about episode
                 if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping':
-                    ep_ret, ep_len = -sum(ep_rews), len(ep_rews)
+                    ep_ret, ep_len = -2.5 * sum(ep_rews), len(ep_rews)
                 else:
                     ep_ret, ep_len = sum(ep_rews), len(ep_rews)
                 batch_rets.append(ep_ret)
