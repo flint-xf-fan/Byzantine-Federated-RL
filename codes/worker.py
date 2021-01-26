@@ -233,7 +233,7 @@ class Worker:
                     # refer to agent.py to see attack
                     
                 elif self.attack_type == 'sign-flipping':
-                    grad.append(-4 * item.grad)
+                    grad.append(-2 * item.grad)
                     # refer to agent.py to see attack
                     
                 else: raise NotImplementedError()
