@@ -232,7 +232,7 @@ class Agent:
                     # should be
                     rnd = torch.rand(gradient[0][idx].shape) * 2. - 1.
                     rnd = rnd / rnd.norm()
-                    attacked_gradient = estimated_mean.view(gradient[bad_worker][idx]) + rnd * estimated_2V * 3. / 2.
+                    attacked_gradient = estimated_mean.view(gradient[bad_worker][idx].shape) + rnd * estimated_2V * 3. / 2.
                     
                     # end
 
