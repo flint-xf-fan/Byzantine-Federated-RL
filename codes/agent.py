@@ -229,7 +229,7 @@ class Agent:
                     # rnd = torch.rand(gradient[0][idx].shape) * estimated_2V
               
                     # should be
-                    rnd = torch.rand(gradient[0][idx].shape)
+                    rnd = torch.rand(gradient[0][idx].shape) * 2. - 1.
                     rnd = rnd / rnd.norm()
                     rnd = rnd * estimated_2V
                     
