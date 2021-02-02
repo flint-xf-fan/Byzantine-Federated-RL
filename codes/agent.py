@@ -225,18 +225,19 @@ class Agent:
                     tmp = torch.stack(tmp)
 
                     estimated_2V = euclidean_dist(tmp, tmp).max()
+                    estimated_mean = tmp.mean(0)
 
                     # rnd = torch.rand(gradient[0][idx].shape) * estimated_2V
               
                     # should be
                     rnd = torch.rand(gradient[0][idx].shape) * 2. - 1.
                     rnd = rnd / rnd.norm()
-                    rnd = rnd * estimated_2V
+                    attacked_gradient = estimated_mean.view(gradient[bad_worker][idx]) + rnd * estimated_2V * 3. / 2.
                     
                     # end
 
                     for bad_worker in range(opts.num_Byzantine):
-                        gradient[bad_worker][idx] = gradient[bad_worker][idx] + rnd
+                        gradient[bad_worker][idx] = attacked_gradient
 
             # simulate variance-attack (if needed) on server for demo
             elif opts.attack_type == 'variance-attack' and opts.num_Byzantine > 0: 
