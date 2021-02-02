@@ -226,7 +226,14 @@ class Agent:
 
                     estimated_2V = euclidean_dist(tmp, tmp).max()
 
-                    rnd = torch.rand(gradient[0][idx].shape) * estimated_2V
+                    # rnd = torch.rand(gradient[0][idx].shape) * estimated_2V
+              
+                    # should be
+                    rnd = torch.rand(gradient[0][idx].shape)
+                    rnd = rnd / rnd.norm()
+                    rnd = rnd * estimated_2V
+                    
+                    # end
 
                     for bad_worker in range(opts.num_Byzantine):
                         gradient[bad_worker][idx] = gradient[bad_worker][idx] + rnd
