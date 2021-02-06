@@ -18,3 +18,24 @@ python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --run_
 
 python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp2_HalfCheetah_Ours_W10B3 --with_filter --scsg --multiple_run 10 --log_dir logs_EXP2HalfCheetah
 python run.py --env_name HalfCheetah-v2 --num_worker 7 --run_name Exp2_HalfCheetah_Ours_W7B0 --with_filter --scsg --multiple_run 10 --log_dir logs_EXP2HalfCheetah
+
+--------------------
+
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_RA --with_filter --scsg --multiple_run 3 --log_dir logs_EXP2LunarLander --attack_type random-action --seed 0
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_RA --with_filter --scsg --multiple_run 3 --log_dir logs_EXP2LunarLander --attack_type random-action --seed 3
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_RA --with_filter --scsg --multiple_run 4 --log_dir logs_EXP2LunarLander --attack_type random-action --seed 6
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_SVRG_W10B3_RA --svrg --multiple_run 10 --log_dir logs_EXP2LunarLander --attack_type random-action
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_VPG_W10B3_RA --multiple_run 10 --log_dir logs_EXP2LunarLander --attack_type random-action
+
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_SF --with_filter --scsg --multiple_run 3 --log_dir logs_EXP2LunarLander --attack_type sign-flipping --seed 0
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_SF --with_filter --scsg --multiple_run 3 --log_dir logs_EXP2LunarLander --attack_type sign-flipping --seed 3
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_SF --with_filter --scsg --multiple_run 4 --log_dir logs_EXP2LunarLander --attack_type sign-flipping --seed 6
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_SVRG_W10B3_SF --svrg --multiple_run 10 --log_dir logs_EXP2LunarLander --attack_type sign-flipping
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_VPG_W10B3_SF --multiple_run 10 --log_dir logs_EXP2LunarLander --attack_type sign-flipping
+
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_RN --with_filter --scsg --multiple_run 3 --log_dir logs_EXP2LunarLander --attack_type random-noise --seed 0
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_RN --with_filter --scsg --multiple_run 3 --log_dir logs_EXP2LunarLander --attack_type random-noise --seed 3
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_Ours_W10B3_RN --with_filter --scsg --multiple_run 4 --log_dir logs_EXP2LunarLander --attack_type random-noise --seed 6
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_SVRG_W10B3_RN --svrg --multiple_run 10 --log_dir logs_EXP2LunarLander --attack_type random-noise
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_LunarLander_VPG_W10B3_RN --multiple_run 10 --log_dir logs_EXP2LunarLander --attack_type random-noise
+
