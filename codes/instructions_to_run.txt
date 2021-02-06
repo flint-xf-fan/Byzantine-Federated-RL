@@ -1,0 +1,9 @@
+1. install conda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+
+2. git clone 
+git clone https://github.com/xiaofeng-fan/Byzantine-RL.git
+
+
+pip install tensorboard tqdm sklearn matplotlib Box2d gym

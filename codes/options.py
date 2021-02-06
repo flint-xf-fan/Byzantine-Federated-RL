@@ -45,10 +45,12 @@ def get_options(args=None):
     # SVRG and SCSG
     parser.add_argument('--svrg', action='store_true', help='run SVRG')
     parser.add_argument('--scsg', action='store_true', help='run SCSG')
+    
 
     
     ### Byzantine Filtering
     parser.add_argument('--with_filter', action='store_true')
+    parser.add_argument('--old_filter', action='store_true')
     parser.add_argument('--alpha', type=float, default=0.4)
     parser.add_argument('--delta', type=float, default=0.6)
     parser.add_argument('--sigma', type=float, default=0.06)
