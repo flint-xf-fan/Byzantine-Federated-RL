@@ -238,6 +238,29 @@ class Agent:
 
                     for bad_worker in range(opts.num_Byzantine):
                         gradient[bad_worker][idx] = attacked_gradient
+                        
+                    # simulate filtering-attack (if needed) on server for demo
+            elif opts.attack_type == 'filtering-attack-5' and opts.num_Byzantine > 0:  
+                for idx,_ in enumerate(self.master.parameters()):
+                    tmp = []
+                    for bad_worker in range(opts.num_Byzantine):
+                        tmp.append(gradient[bad_worker][idx].view(-1))
+                    tmp = torch.stack(tmp)
+
+                    estimated_2V = euclidean_dist(tmp, tmp).max()
+                    estimated_mean = tmp.mean(0)
+
+                    # rnd = torch.rand(gradient[0][idx].shape) * estimated_2V
+              
+                    # should be
+                    rnd = torch.rand(gradient[0][idx].shape) * 2. - 1.
+                    rnd = rnd / rnd.norm()
+                    attacked_gradient = estimated_mean.view(gradient[bad_worker][idx].shape) + rnd * estimated_2V * 5. / 2.
+                    
+                    # end
+
+                    for bad_worker in range(opts.num_Byzantine):
+                        gradient[bad_worker][idx] = attacked_gradient
 
             elif opts.attack_type == 'filtering-attack-7' and opts.num_Byzantine > 0:  
                 for idx,_ in enumerate(self.master.parameters()):
