@@ -358,9 +358,15 @@ class Agent:
                     if torch.sum(k_prime) > 0:
                         # mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
                         # mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])]
-                        mu_mean_vec = torch.mean(mu_vec[k_prime],0).view(1,-1)
-                        mu_med_vec = mu_vec[k_prime][euclidean_dist(mu_mean_vec, mu_vec[k_prime]).argmin()].view(1,-1)
-                        assert mu_med_vec.view(1,-1).shape == mu_vec[0].view(1,-1).shape
+                        
+                        if opts.old_filter:
+                            mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])].view(1,-1)
+                        # mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
+                        else:
+                            mu_mean_vec = torch.mean(mu_vec[k_prime],0).view(1,-1)
+                            mu_med_vec = mu_vec[k_prime][euclidean_dist(mu_mean_vec, mu_vec[k_prime]).argmin()].view(1,-1)
+                            assert mu_med_vec.view(1,-1).shape == mu_vec[0].view(1,-1).shape
+                            
                         # re-filter with new vector median
                         if opts.old_filter:
                             Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 4 * sigma # !!!!!!!!!!!!!!!!!!!!!!!!!! 4 -> 2
