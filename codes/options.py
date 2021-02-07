@@ -155,7 +155,7 @@ def get_options(args=None):
         opts.gamma  = 0.99
         opts.min_reward = -1000
         opts.max_reward = 300  
-        opts.sigma = 0.07
+        opts.sigma = 0.05
         opts.activation = 'Tanh'
 
 ## current running
