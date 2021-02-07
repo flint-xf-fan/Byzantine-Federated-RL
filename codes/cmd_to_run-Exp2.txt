@@ -42,21 +42,15 @@ python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_
 
 --------------------
 
-python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_LunarLander_Ju_W10B3_FA --multiple_run 3 --seed 0 --log_dir logs_EXP5_LunarLander --attack_type filtering-attack
-python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_LunarLander_Ju_W10B3_FA --multiple_run 3 --seed 3 --log_dir logs_EXP5_LunarLander --attack_type filtering-attack
-python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_LunarLander_Ju_W10B3_FA --multiple_run 4 --seed 6 --log_dir logs_EXP5_LunarLander --attack_type filtering-attack
-
-python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_LunarLander_Ju_W10B3_FA7 --multiple_run 3 --seed 0 --log_dir logs_EXP5_LunarLander --attack_type filtering-attack-7
-python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_LunarLander_Ju_W10B3_FA7 --multiple_run 3 --seed 3 --log_dir logs_EXP5_LunarLander --attack_type filtering-attack-7
-python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_LunarLander_Ju_W10B3_FA7 --multiple_run 4 --seed 6 --log_dir logs_EXP5_LunarLander --attack_type filtering-attack-7
-
 
 python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_Cartpole_Ju_W10B3_FA --multiple_run 10 --log_dir logs_EXP5_Cartpole --attack_type filtering-attack
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_Cartpole_Ju_W10B3_FA4 --multiple_run 10 --log_dir logs_EXP5_Cartpole --attack_type filtering-attack-4
 python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_Cartpole_Ju_W10B3_FA7 --multiple_run 10 --log_dir logs_EXP5_Cartpole --attack_type filtering-attack-7
 python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_Cartpole_Ju_W10B3_FA5 --multiple_run 10 --log_dir logs_EXP5_Cartpole --attack_type filtering-attack-5
 
 
 python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_HalfCheetah_Ju_W10B3_FA --multiple_run 10 --log_dir logs_EXP5_HalfCheetah --attack_type filtering-attack
+python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_HalfCheetah_Ju_W10B3_FA4 --multiple_run 10 --log_dir logs_EXP5_HalfCheetah --attack_type filtering-attack-4
 python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_HalfCheetah_Ju_W10B3_FA7 --multiple_run 10 --log_dir logs_EXP5_HalfCheetah --attack_type filtering-attack-7
 python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --old_filter --run_name Exp5_HalfCheetah_Ju_W10B3_FA5 --multiple_run 10 --log_dir logs_EXP5_HalfCheetah --attack_type filtering-attack-5
 

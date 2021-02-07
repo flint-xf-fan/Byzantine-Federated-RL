@@ -236,6 +236,10 @@ class Worker:
                     grad.append(item.grad)
                     # refer to agent.py to see attack  
                     
+                elif self.attack_type == 'filtering-attack-4':
+                    grad.append(item.grad)
+                    # refer to agent.py to see attack  
+                    
                 elif self.attack_type == 'filtering-attack-7':
                     grad.append(item.grad)
                     # refer to agent.py to see attack
