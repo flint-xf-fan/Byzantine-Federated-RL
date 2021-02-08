@@ -70,14 +70,14 @@ python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with
 
 --------------------
 
-python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_Cartpole_Ours_W10B3_RR --multiple_run 10 --log_dir logs_EXP6_Cartpole --attack_type random-reward
-python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_Cartpole_Ours_W10B3_RF --multiple_run 10 --log_dir logs_EXP6_Cartpole --attack_type reward-flipping
-python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_Cartpole_Ours_W10B3_ZG --multiple_run 10 --log_dir logs_EXP6_Cartpole --attack_type zero-gradient
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_Cartpole_Ours_W10B3_RR --multiple_run 10 --log_dir logs_EXP7_Cartpole --attack_type random-reward
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_Cartpole_Ours_W10B3_RF --multiple_run 10 --log_dir logs_EXP7_Cartpole --attack_type reward-flipping
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_Cartpole_Ours_W10B3_ZG --multiple_run 10 --log_dir logs_EXP7_Cartpole --attack_type zero-gradient
 
 
-python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_HalfCheetah_Ours_W10B3_RR --multiple_run 10 --log_dir logs_EXP6_HalfCheetah --attack_type random-reward
-python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_HalfCheetah_Ours_W10B3_RF --multiple_run 10 --log_dir logs_EXP6_HalfCheetah --attack_type reward-flipping
-python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_HalfCheetah_Ours_W10B3_ZG --multiple_run 10 --log_dir logs_EXP6_HalfCheetah --attack_type zero-gradient
+python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_HalfCheetah_Ours_W10B3_RR --multiple_run 10 --log_dir logs_EXP7_HalfCheetah --attack_type random-reward
+python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_HalfCheetah_Ours_W10B3_RF --multiple_run 10 --log_dir logs_EXP7_HalfCheetah --attack_type reward-flipping
+python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --with_filter --scsg --run_name Exp7_HalfCheetah_Ours_W10B3_ZG --multiple_run 10 --log_dir logs_EXP7_HalfCheetah --attack_type zero-gradient
 
 
 
