@@ -34,7 +34,7 @@ def get_options(args=None):
     # Byzantine parameters
     parser.add_argument('--num_worker', type=int, default=10, help = 'number of worker node')
     parser.add_argument('--num_Byzantine', type=int, default=0, help = 'number of worker node that is Byzantine')
-    parser.add_argument('--attack_type', type=str, default='filtering-attack', choices = ['random-action', 'sign-flipping', 'nosing-reward', 'reward-flipping', 'variance-attack', 'random-noise', 'filtering-attack', 'filtering-attack-4', 'filtering-attack-7', 'filtering-attack-5'], help = 'the attack type of a Byzantine worker')
+    parser.add_argument('--attack_type', type=str, default='filtering-attack', choices = ['zero-gradient', 'random-action', 'sign-flipping', 'nosing-reward', 'reward-flipping', 'random-reward', 'variance-attack', 'random-noise', 'filtering-attack', 'filtering-attack-4', 'filtering-attack-7', 'filtering-attack-5'], help = 'the attack type of a Byzantine worker')
     
     
     # policy net
@@ -155,7 +155,7 @@ def get_options(args=None):
         opts.gamma  = 0.99
         opts.min_reward = -1000
         opts.max_reward = 300  
-        opts.sigma = 0.015
+        opts.sigma = 0.02
         opts.activation = 'Tanh'
 
 ## current running

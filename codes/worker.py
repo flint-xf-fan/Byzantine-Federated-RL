@@ -9,6 +9,7 @@ import math
 import torch.optim as optim
 from utils import env_wrapper
 import pprint
+import random
 
 class Worker:
 
@@ -128,17 +129,11 @@ class Worker:
            
             obs, rew, done, info = self.env.step(act)
             
-#             if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping': 
-#                 rew = -100 * rew # I see why this cannot work as desired. ############ remember that our data points are trajectries not individual timesteps!!!! you shold consider to alter the ep returns
-                                 # or have to scale it. otherwise. it won't attack cos over the traj, the effect might just be reduce the value of the return. if it runs out sign is not changed, then no effect at all.
-                                 # different reward can induce the same policy. this is one issue in inverse RL. #################################
-#             elif attack_type is not None and self.attack_type == 'nosing-reward': # no need for this attack as we already have random noise
-#                 if self.rew_max is None:
-#                     self.rew_max = rew
-#                 else:
-#                     self.rew_max = max(np.abs(rew), self.rew_max)
-#                     rew = np.random.rand() * 2 * self.rew_max - self.rew_max
-    
+            if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping': 
+                rew = - rew # I see why this cannot work as desired. ############ remember that our data points are trajectries not individual timesteps!!!! you shold consider to alter the ep returns
+                                  # or have to scale it. otherwise. it won't attack cos over the traj, the effect might just be reduce the value of the return. if it runs out sign is not changed, then no effect at all.
+                                  # different reward can induce the same policy. this is one issue in inverse RL. #################################
+
             t = t + 1
             
             # save action_log_prob, reward
@@ -163,9 +158,18 @@ class Worker:
                 # the weight for each logprob(a_t|s_T) is sum_t^T (gamma^(t'-t) * r_t')
                 returns = []
                 R = 0
-                for r in ep_rews[::-1]:
-                    R = r + self.gamma * R
-                    returns.insert(0, R)
+                
+                if self.is_Byzantine and attack_type is not None and self.attack_type == 'random-reward': 
+                    random.shuffle(ep_rews)
+                    for r in ep_rews:
+                        R = r + self.gamma * R
+                        returns.insert(0, R)
+                else:
+                    for r in ep_rews[::-1]:
+                        R = r + self.gamma * R
+                        returns.insert(0, R)
+                    
+            
                 returns = torch.tensor(returns, dtype=torch.float32)
 
                 advantage = (returns - returns.mean()) / (returns.std() + 1e-20)
@@ -214,6 +218,10 @@ class Worker:
                 elif self.attack_type == 'nosing-reward':
                     grad.append(item.grad)
                     # refer to collect_experience_for_training() to see attack
+        
+                elif self.attack_type == 'zero-gradient':
+                    grad.append(item.grad * 0)
+                    # refer to collect_experience_for_training() to see attack
                     
                 
                 elif self.attack_type == 'random-action':
@@ -221,6 +229,10 @@ class Worker:
                     # refer to collect_experience_for_training() to see attack
                     
                 elif self.attack_type == 'variance-attack':
+                    grad.append(item.grad)
+                    # refer to agent.py to see attack
+                
+                elif self.attack_type == 'random-reward':
                     grad.append(item.grad)
                     # refer to agent.py to see attack
 
