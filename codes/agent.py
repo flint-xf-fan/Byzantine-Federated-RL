@@ -324,12 +324,6 @@ class Agent:
             # do filter step to detect Byzantine worker on master node if needed
             if opts.with_filter:
                 
-                # calculate C, Variance Bound V, thresold, and alpha
-                V = 2 * np.log(2 * opts.num_worker / opts.delta)
-                sigma = opts.sigma
-                threshold = 2 * sigma * np.sqrt(V / Batch_size)
-                alpha = opts.alpha
-            
                 # flatten the gradient vectors of each worker and put them together, shape [num_worker, -1]
                 mu_vec = None
                 for idx,item in enumerate(self.old_master.parameters()):
@@ -347,6 +341,21 @@ class Agent:
                     
                 # calculate the norm distance between each worker's gradient vector, shape [num_worker, num_worker]
                 dist = euclidean_dist(mu_vec, mu_vec)
+                
+                
+                # calculate C, Variance Bound V, thresold, and alpha
+                V = 2 * np.log(2 * opts.num_worker / opts.delta)
+                ########################################################3
+                # 8 feb try adaptive
+                # replace
+                # sigma = opts.sigma
+                # with
+                sigma = torch.mean(dist)
+                # end
+                ##########################
+                threshold = 2 * sigma * np.sqrt(V / Batch_size)
+                alpha = opts.alpha
+            
                 print(f'dist:{torch.max(dist)}, \t threshold:{threshold}')
                 
                 # find the index of "compact" worker's gradient such that |dist <= threshold| > 0.5 * num_worker
