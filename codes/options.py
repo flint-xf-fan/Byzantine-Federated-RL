@@ -117,7 +117,7 @@ def get_options(args=None):
         opts.max_reward = 4000
         opts.alpha = 0.4
         opts.delta = 0.6
-        opts.sigma = 0.9
+        opts.sigma = 0.7
         opts.activation = 'Tanh'
 
 # current best
