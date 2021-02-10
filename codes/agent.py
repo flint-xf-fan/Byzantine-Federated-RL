@@ -348,9 +348,9 @@ class Agent:
                 ########################################################3
                 # 8 feb try adaptive
                 # replace
-                sigma = opts.sigma
+                # sigma = opts.sigma
                 # with
-                # sigma = torch.mean(dist)
+                sigma = torch.mean(dist)
                 # end
                 ##########################
                 threshold = 2 * sigma * np.sqrt(V / Batch_size)
