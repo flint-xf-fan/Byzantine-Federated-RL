@@ -118,7 +118,6 @@ class Worker:
                     act_rnd = 0
                 else: # continuous
                     act_rnd = np.zeros(len(self.env.action_space.sample()), dtype=np.float32) 
-                    ################ a bug here for discrete action space but it works well for continuous! #######################
                 act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample, fixed_action = act_rnd)
             else:
                 act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)

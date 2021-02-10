@@ -97,12 +97,13 @@ def get_options(args=None):
         opts.lr_model = 1e-3
         opts.hidden_units = '16,16'
         opts.activation = 'ReLU'
+        opts.output_activation = 'Tanh'
         
         # batch_size
         opts.B = 16 # for SVRPG and GOMDP
         opts.Bmin = 12 # for FedPG-BR
         opts.Bmax = 20 # for FedPG-BR
-        opts.b = 4 # mini batch_size for SVRPG
+        opts.b = 4 # mini batch_size for SVRPG and FedPG-BR
         
         # inner loop iteration for SVRPG
         opts.N = 3
@@ -125,19 +126,20 @@ def get_options(args=None):
         opts.lr_model = 8e-5 # 4e-3
         opts.hidden_units = '64,64'
         opts.activation = 'Tanh'
+        opts.output_activation = 'Tanh'
        
         # batch_size
         opts.B = 48 # for SVRPG and GOMDP
         opts.Bmin = 46 # for FedPG-BR
         opts.Bmax = 50 # for FedPG-BR
-        opts.b = 16 # mini batch_size for SVRPG
+        opts.b = 16 # mini batch_size for SVRPG and FedPG-BR
         
         # inner loop iteration for SVRPG
         opts.N = 3
     
         # Filtering hyperparameters for FedPG-BR
         opts.delta = 0.6
-        opts.sigma = 0.7
+        opts.sigma = 0.9
 
 
     if opts.env_name == 'LunarLander-v2':
@@ -153,19 +155,20 @@ def get_options(args=None):
         opts.lr_model = 1e-3 # 8e-4
         opts.hidden_units = '64,64'
         opts.activation = 'Tanh'
+        opts.output_activation = 'Tanh'
         
         # batch_size
         opts.B = 32 # for SVRPG and GOMDP
         opts.Bmin = 26 # for FedPG-BR
         opts.Bmax = 38 # for FedPG-BR
-        opts.b = 8 # mini batch_size for SVRPG
+        opts.b = 8 # mini batch_size for SVRPG and FedPG-BR
         
         # inner loop iteration for SVRPG
         opts.N = 3
         
         # Filtering hyperparameters for FedPG-BR
         opts.delta = 0.6
-        opts.sigma = 0.05
+        opts.sigma = 0.07
 
     assert opts.SVRPG + opts.FedPG_BR <= 1
     print('run GPMDP\n' if opts.SVRPG + opts.FedPG_BR == 0 else ('run FedPG-BR\n' if opts.FedPG_BR else 'run SVRPG\n'))

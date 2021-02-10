@@ -414,7 +414,7 @@ class Agent:
                 tb_logger.add_scalar(f'params/N_t_{run_id}', N_t, step)
 
                 # Byzantine filtering log
-                if opts.with_filter:
+                if opts.FedPG_BR:
                     
                     y_true = self.true_Byzantine
                     y_pred = (~ Good_set).view(-1).cpu().tolist()
