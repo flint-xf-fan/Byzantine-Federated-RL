@@ -1,0 +1,6 @@
+tensorboard
+tqdm
+sklearn
+matplotlib
+Box2d
+gym[all]
