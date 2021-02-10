@@ -29,6 +29,7 @@ def get_options(args=None):
     # training and validating
     parser.add_argument('--val_size', type=int, default=10, help='Number of episoid used for reporting validation performance')
     parser.add_argument('--val_max_steps', type=int, default=1000)
+    parser.add_argument('--run_id', type=int, default=0)
     
     
     # Byzantine parameters
