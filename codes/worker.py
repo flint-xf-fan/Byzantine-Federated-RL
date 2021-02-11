@@ -86,7 +86,7 @@ class Worker:
             obs, rew, done, _ = env.step(action)
             ep_rew.append(rew)
 
-        if mode == 'rgb': save_frames_as_gif(frames, save_dir, filename)
+        if mode == 'rgb': save_frames_as_gif(frames, save_dir, filename + f'_{np.sum(ep_rew)}_' +'.gif' )
         #print('reward:', np.sum(ep_rew), 'ep_len', len(ep_rew))
         return np.sum(ep_rew), len(ep_rew), ep_rew
     

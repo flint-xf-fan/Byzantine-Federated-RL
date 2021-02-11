@@ -585,7 +585,7 @@ class Agent:
         val_len = 0.0
         
         for _ in range(self.opts.val_size):
-            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, max_steps = max_steps, render = render, sample = False, mode = mode, save_dir = './outputs/', filename = f'gym_{run_id}_{_}.gif')
+            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, max_steps = max_steps, render = render, sample = False, mode = mode, save_dir = './outputs/', filename = f'gym_{run_id}_{_}')
             val_ret += epi_ret
             val_len += epi_len
         
