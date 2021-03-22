@@ -20,6 +20,9 @@ class Memory:
         self.eval_values = {}
         self.training_values = {}
 
+def calc_Z(total, bad):
+    return st.norm.ppf((total -  bad - (np.round(total/2 + 1) - bad)) / (total - bad))
+
 def euclidean_dist(x, y):
     """
     Args:
@@ -315,7 +318,7 @@ class Agent:
                     tmp = torch.stack(tmp)
               
                     for bad_worker in range(opts.num_Byzantine):
-                        gradient[bad_worker][idx] = tmp.mean(0).view(gradient[0][idx].shape) - 0.3*tmp.std(0).view(gradient[0][idx].shape)
+                        gradient[bad_worker][idx] = tmp.mean(0).view(gradient[0][idx].shape) - calc_Z(opts.num_worker, opts.num_Byzantine) * tmp.std(0).view(gradient[0][idx].shape)
               
               
             # make the old policy as a copy of the current master node

@@ -17,3 +17,21 @@ python run.py --env_name CartPole-v1 --num_worker 1 --run_name Exp1_Cartpole_SVR
 python run.py --env_name CartPole-v1 --num_worker 1 --run_name Exp1_Cartpole_Ours_W1 --scsg --multiple_run 10 --log_dir logs_Cartpole
 python run.py --env_name CartPole-v1 --num_worker 3 --run_name Exp1_Cartpole_Ours_W3 --scsg --multiple_run 10 --log_dir logs_Cartpole --with_filter
 python run.py --env_name CartPole-v1 --num_worker 10 --run_name Exp1_Cartpole_Ours_W10_WithFilter --scsg --multiple_run 10 --log_dir logs_Cartpole --with_filter
+
+--------
+
+(3090)
+
+python run.py --env_name HalfCheetah-v2 --num_worker 1 --run_name Exp1_HalfCheetah_Ours_W1 --scsg --multiple_run 10 --log_dir logs_HalfCheetah_r --with_filter
+python run.py --env_name HalfCheetah-v2 --num_worker 2 --run_name Exp1_HalfCheetah_Ours_W2 --scsg --multiple_run 10 --log_dir logs_HalfCheetah_r --with_filter
+python run.py --env_name HalfCheetah-v2 --num_worker 3 --run_name Exp1_HalfCheetah_Ours_W3 --scsg --multiple_run 10 --log_dir logs_HalfCheetah_r --with_filter
+python run.py --env_name HalfCheetah-v2 --num_worker 4 --run_name Exp1_HalfCheetah_Ours_W4 --scsg --multiple_run 10 --log_dir logs_HalfCheetah_r --with_filter
+python run.py --env_name HalfCheetah-v2 --num_worker 5 --run_name Exp1_HalfCheetah_Ours_W5 --scsg --multiple_run 10 --log_dir logs_HalfCheetah_r --with_filter
+
+(V101)
+
+python run.py --env_name CartPole-v1 --num_worker 1 --run_name Exp1_Cartpole_Ours_W1 --scsg --multiple_run 10 --log_dir logs_Cartpole_r --with_filter
+python run.py --env_name CartPole-v1 --num_worker 2 --run_name Exp1_Cartpole_Ours_W2 --scsg --multiple_run 10 --log_dir logs_Cartpole_r --with_filter
+python run.py --env_name CartPole-v1 --num_worker 3 --run_name Exp1_Cartpole_Ours_W3 --scsg --multiple_run 10 --log_dir logs_Cartpole_r --with_filter
+python run.py --env_name CartPole-v1 --num_worker 4 --run_name Exp1_Cartpole_Ours_W4 --scsg --multiple_run 10 --log_dir logs_Cartpole_r --with_filter
+python run.py --env_name CartPole-v1 --num_worker 5 --run_name Exp1_Cartpole_Ours_W5 --scsg --multiple_run 10 --log_dir logs_Cartpole_r --with_filter

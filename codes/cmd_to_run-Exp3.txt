@@ -16,3 +16,20 @@ python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --run_
 python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_HalfCheetah_Ours_W10B3_ZG --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type zero-gradient
 python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_HalfCheetah_Ours_W10B3_RN --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3 --attack_type random-noise
 
+---------
+
+
+(2080)
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3r_LunarLander_Ours_W10B3_VA --with_filter --scsg --seed 0 --multiple_run 3 --log_dir logs_EXP3r_LunarLander --attack_type variance-attack
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3r_LunarLander_Ours_W10B3_VA --with_filter --scsg --seed 3 --multiple_run 3 --log_dir logs_EXP3r_LunarLander --attack_type variance-attack
+python run.py --env_name LunarLander-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3r_LunarLander_Ours_W10B3_VA --with_filter --scsg --seed 6 --multiple_run 4 --log_dir logs_EXP3r_LunarLander --attack_type variance-attack
+
+
+
+(3090)
+python run.py --env_name CartPole-v1 --num_worker 10 --num_Byzantine 3 --run_name Exp3r_CartPole_Ours_W10B3_VA --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3r_CartPole  --attack_type variance-attack
+
+
+(2080)
+python run.py --env_name HalfCheetah-v2 --num_worker 10 --num_Byzantine 3 --run_name Exp3_rHalfCheetah_Ours_W10B3_VA --with_filter --scsg --multiple_run 10 --log_dir logs_EXP3r_HalfCheetah --attack_type variance-attack
+
