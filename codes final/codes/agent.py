@@ -214,7 +214,7 @@ class Agent:
                 batch_lens.append(lens)
             
             
-            # simulate FedPG-attack (if needed) on server for demo
+            # simulate FedScsPG-attack (if needed) on server for demo
             if opts.attack_type == 'FedScsPG-attack' and opts.num_Byzantine > 0:  
                 for idx,_ in enumerate(self.master.parameters()):
                     tmp = []
