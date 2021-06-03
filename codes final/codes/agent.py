@@ -188,7 +188,7 @@ class Agent:
             # distribute current params and Batch_Size to all workers
             param = get_inner_model(self.master.logits_net).state_dict()
             
-            if opts.FedPG_BR:
+            if opts.FT_FedScsPG:
                 Batch_size = np.random.randint(opts.Bmin, opts.Bmax + 1)
             else:
                 Batch_size = opts.B
@@ -215,7 +215,7 @@ class Agent:
             
             
             # simulate FedPG-attack (if needed) on server for demo
-            if opts.attack_type == 'FedPG-attack' and opts.num_Byzantine > 0:  
+            if opts.attack_type == 'FedScsPG-attack' and opts.num_Byzantine > 0:  
                 for idx,_ in enumerate(self.master.parameters()):
                     tmp = []
                     for bad_worker in range(opts.num_Byzantine):
@@ -237,7 +237,7 @@ class Agent:
             self.old_master.load_param_from_master(param)
             
             # do Aggregate Algorithm to detect Byzantine worker on master node
-            if opts.FedPG_BR:
+            if opts.FT_FedScsPG:
                 
                 # flatten the gradient vectors of each worker and put them together, shape [num_worker, -1]
                 mu_vec = None
@@ -313,9 +313,9 @@ class Agent:
             # perform gradient update in master node
             grad_array = [] # store gradients for logging
 
-            if opts.FedPG_BR or opts.SVRPG:
+            if opts.FT_FedScsPG or opts.SVRPG:
                 
-                if opts.FedPG_BR:
+                if opts.FT_FedScsPG:
                     # for n=1 to Nt ~ Geom(B/B+b) do grad update
                     b = opts.b
                     N_t = np.random.geometric(p= 1 - Batch_size/(Batch_size + b))
@@ -414,7 +414,7 @@ class Agent:
                 tb_logger.add_scalar(f'params/N_t_{run_id}', N_t, step)
 
                 # Byzantine filtering log
-                if opts.FedPG_BR:
+                if opts.FT_FedScsPG:
                     
                     y_true = self.true_Byzantine
                     y_pred = (~ Good_set).view(-1).cpu().tolist()
