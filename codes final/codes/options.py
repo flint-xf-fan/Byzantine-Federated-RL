@@ -7,7 +7,7 @@ import argparse
 import torch
 
 def get_options(args=None):
-    parser = argparse.ArgumentParser('FedPG-BR')
+    parser = argparse.ArgumentParser('FT-FedScsPG')
 
     ### Overall run settings
     parser.add_argument('--env_name', '--env', type=str, default='CartPole-v1', choices = ['HalfCheetah-v2', 'LunarLander-v2', 'CartPole-v1'], 
@@ -43,15 +43,15 @@ def get_options(args=None):
     parser.add_argument('--alpha', type=float, default=0.4, 
                         help = 'atmost alpha-fractional worker nodes are Byzantine')
     parser.add_argument('--attack_type', type=str, default='filtering-attack', 
-                        choices = ['zero-gradient', 'random-action', 'sign-flipping', 'reward-flipping', 'random-reward', 'random-noise', 'FedPG-attack'],
+                        choices = ['zero-gradient', 'random-action', 'sign-flipping', 'reward-flipping', 'random-reward', 'random-noise', 'FedScsPG-attack'],
                         help = 'the behavior scheme of a Byzantine worker')
         
     
     # RL Algorithms (default GOMDP)
     parser.add_argument('--SVRPG', action='store_true', 
                         help='run SVRPG')
-    parser.add_argument('--FedPG_BR', action='store_true', 
-                        help='run FedPG-BR')
+    parser.add_argument('--FT_FedScsPG', action='store_true', 
+                        help='run FT-FedScsPG')
 
     
     # Training and validating
@@ -101,14 +101,14 @@ def get_options(args=None):
         
         # batch_size
         opts.B = 16 # for SVRPG and GOMDP
-        opts.Bmin = 12 # for FedPG-BR
-        opts.Bmax = 20 # for FedPG-BR
-        opts.b = 4 # mini batch_size for SVRPG and FedPG-BR
+        opts.Bmin = 12 # for FT-FedScsPG
+        opts.Bmax = 20 # for FT-FedScsPG
+        opts.b = 4 # mini batch_size for SVRPG and FT-FedScsPG
         
         # inner loop iteration for SVRPG
         opts.N = 3
         
-        # Filtering hyperparameters for FedPG-BR
+        # Filtering hyperparameters for FT-FedScsPG
         opts.delta = 0.6
         opts.sigma = 0.06
 
@@ -130,14 +130,14 @@ def get_options(args=None):
        
         # batch_size
         opts.B = 48 # for SVRPG and GOMDP
-        opts.Bmin = 46 # for FedPG-BR
-        opts.Bmax = 50 # for FedPG-BR
-        opts.b = 16 # mini batch_size for SVRPG and FedPG-BR
+        opts.Bmin = 46 # for FT-FedScsPG
+        opts.Bmax = 50 # for FT-FedScsPG
+        opts.b = 16 # mini batch_size for SVRPG and FT-FedScsPG
         
         # inner loop iteration for SVRPG
         opts.N = 3
     
-        # Filtering hyperparameters for FedPG-BR
+        # Filtering hyperparameters for FT-FedScsPG
         opts.delta = 0.6
         opts.sigma = 0.9
 
@@ -159,18 +159,18 @@ def get_options(args=None):
         
         # batch_size
         opts.B = 32 # for SVRPG and GOMDP
-        opts.Bmin = 26 # for FedPG-BR
-        opts.Bmax = 38 # for FedPG-BR
-        opts.b = 8 # mini batch_size for SVRPG and FedPG-BR
+        opts.Bmin = 26 # for FT-FedScsPG
+        opts.Bmax = 38 # for FT-FedScsPG
+        opts.b = 8 # mini batch_size for SVRPG and FT-FedScsPG
         
         # inner loop iteration for SVRPG
         opts.N = 3
         
-        # Filtering hyperparameters for FedPG-BR
+        # Filtering hyperparameters for FT-FedScsPG
         opts.delta = 0.6
         opts.sigma = 0.07
 
-    assert opts.SVRPG + opts.FedPG_BR <= 1
-    print('run GPMDP\n' if opts.SVRPG + opts.FedPG_BR == 0 else ('run FedPG-BR\n' if opts.FedPG_BR else 'run SVRPG\n'))
+    assert opts.SVRPG + opts.FT_FedScsPG <= 1
+    print('run GPMDP\n' if opts.SVRPG + opts.FT_FedScsPG == 0 else ('run FT-FedScsPG\n' if opts.FedPG_BR else 'run SVRPG\n'))
     
     return opts
