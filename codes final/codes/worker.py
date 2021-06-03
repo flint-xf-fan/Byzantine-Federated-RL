@@ -223,7 +223,7 @@ class Worker:
                     grad.append(item.grad)
                     # refer to collect_experience_for_training() to see attack
                 
-                elif self.attack_type == 'FedPG-attack':
+                elif self.attack_type == 'FedScsPG-attack':
                     grad.append(item.grad)
                     # refer to agent.py to see attack
                     
