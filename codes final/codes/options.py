@@ -171,6 +171,6 @@ def get_options(args=None):
         opts.sigma = 0.07
 
     assert opts.SVRPG + opts.FT_FedScsPG <= 1
-    print('run GPMDP\n' if opts.SVRPG + opts.FT_FedScsPG == 0 else ('run FT-FedScsPG\n' if opts.FedPG_BR else 'run SVRPG\n'))
+    print('run GPMDP\n' if opts.SVRPG + opts.FT_FedScsPG == 0 else ('run FT-FedScsPG\n' if opts.FT_FedScsPG else 'run SVRPG\n'))
     
     return opts
