@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Oct 19 12:27:02 2020
-
-@author: yiningma
-"""
 
 import os
 import json
@@ -58,7 +53,7 @@ def run(opts):
         if opts.load_path is not None:
             agent.load(opts.load_path)
         
-        agent.start_validating(tb_writer, 0, opts.val_max_steps, opts.render, mode = opts.mode, run_id = opts.run_id)
+        agent.start_validating(tb_writer, 0, opts.val_max_steps, opts.render, mode = opts.mode)
         
     else:
         for run_id in opts.seeds:

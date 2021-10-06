@@ -1,14 +1,10 @@
 import torch
 import numpy as np
 import gym
-from gym.spaces import Discrete, Box
-from policy import MlpPolicy, DiagonalGaussianMlpPolicy, LinearCritic, CnnPolicy
+from gym.spaces import Discrete
+from policy import MlpPolicy, DiagonalGaussianMlpPolicy
 from utils import get_inner_model, save_frames_as_gif
-from copy import deepcopy
-import math
-import torch.optim as optim
 from utils import env_wrapper
-import pprint
 import random
 
 class Worker:
@@ -39,6 +35,7 @@ class Worker:
         
         assert opts is not None
         
+        # get observation dim
         obs_dim = self.env.observation_space.shape[0]
         if isinstance(self.env.action_space, Discrete):
             n_acts = self.env.action_space.n
@@ -48,6 +45,7 @@ class Worker:
         hidden_sizes = list(eval(hidden_units))
         self.sizes = [obs_dim]+hidden_sizes+[n_acts] # make core of policy network
         
+        # get policy net
         if isinstance(self.env.action_space, Discrete):
             self.logits_net = MlpPolicy(self.sizes, activation, output_activation)
         else:
@@ -55,8 +53,6 @@ class Worker:
         
         if self.id == 1:
             print(self.logits_net)
-        
-        self.rew_max = None
 
     
     def load_param_from_master(self, param):
@@ -86,12 +82,10 @@ class Worker:
             obs, rew, done, _ = env.step(action)
             ep_rew.append(rew)
 
-        if mode == 'rgb': save_frames_as_gif(frames, save_dir, filename + f'_{np.sum(ep_rew)}_' +'.gif' )
-        #print('reward:', np.sum(ep_rew), 'ep_len', len(ep_rew))
+        if mode == 'rgb': save_frames_as_gif(frames, save_dir, filename)
         return np.sum(ep_rew), len(ep_rew), ep_rew
     
     def collect_experience_for_training(self, B, device, record = False, sample = True, attack_type = None):
-        #self.config()
         # make some empty lists for logging.
         batch_weights = []      # for R(tau) weighting in policy gradient
         batch_rets = []         # for measuring episode returns
@@ -117,23 +111,24 @@ class Worker:
             # act in the environment  
             obs = env_wrapper(self.env_name, obs)
             
+            # simulate random-action attacker if needed
             if self.is_Byzantine and attack_type is not None and self.attack_type == 'random-action':
                 act_rnd = self.env.action_space.sample()
                 if isinstance(act_rnd, int): # discrete action space
                     act_rnd = 0
                 else: # continuous
-                    act_rnd = np.zeros(len(self.env.action_space.sample()), dtype=np.float32) ################ a bug here for discrete action space but it works well for continuous! #######################
+                    act_rnd = np.zeros(len(self.env.action_space.sample()), dtype=np.float32) 
                 act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample, fixed_action = act_rnd)
             else:
                 act, log_prob = self.logits_net(torch.as_tensor(obs, dtype=torch.float32).to(device), sample = sample)
            
             obs, rew, done, info = self.env.step(act)
             
+            # simulate reward-flipping attacker if needed
             if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping': 
-                rew = - rew # I see why this cannot work as desired. ############ remember that our data points are trajectries not individual timesteps!!!! you shold consider to alter the ep returns
-                                  # or have to scale it. otherwise. it won't attack cos over the traj, the effect might just be reduce the value of the return. if it runs out sign is not changed, then no effect at all.
-                                  # different reward can induce the same policy. this is one issue in inverse RL. #################################
-
+                rew = - rew
+                
+            # timestep
             t = t + 1
             
             # save action_log_prob, reward
@@ -148,17 +143,14 @@ class Worker:
             if done or len(ep_rews) >= self.max_epi_len:
                 
                 # if episode is over, record info about episode
-                if self.is_Byzantine and attack_type is not None and self.attack_type == 'reward-flipping':
-                    ep_ret, ep_len = -2.5 * sum(ep_rews), len(ep_rews)
-                else:
-                    ep_ret, ep_len = sum(ep_rews), len(ep_rews)
+                ep_ret, ep_len = sum(ep_rews), len(ep_rews)
                 batch_rets.append(ep_ret)
                 batch_lens.append(ep_len)
                 
                 # the weight for each logprob(a_t|s_T) is sum_t^T (gamma^(t'-t) * r_t')
                 returns = []
                 R = 0
-                
+                # simulate random-reware attacker if needed
                 if self.is_Byzantine and attack_type is not None and self.attack_type == 'random-reward': 
                     random.shuffle(ep_rews)
                     for r in ep_rews:
@@ -167,13 +159,11 @@ class Worker:
                 else:
                     for r in ep_rews[::-1]:
                         R = r + self.gamma * R
-                        returns.insert(0, R)
-                    
-            
+                        returns.insert(0, R)            
                 returns = torch.tensor(returns, dtype=torch.float32)
-
-                advantage = (returns - returns.mean()) / (returns.std() + 1e-20)
                 
+                # return whitening
+                advantage = (returns - returns.mean()) / (returns.std() + 1e-20)
                 batch_weights += advantage
 
                 # end experience loop if we have enough of it
@@ -211,53 +201,30 @@ class Worker:
             # return wrong gradient with noise
             grad = []
             for item in self.parameters():
-                if self.attack_type == 'reward-flipping':
-                    grad.append(item.grad)
-                    # refer to collect_experience_for_training() to see attack
-                
-                elif self.attack_type == 'nosing-reward':
-                    grad.append(item.grad)
-                    # refer to collect_experience_for_training() to see attack
-        
-                elif self.attack_type == 'zero-gradient':
+                if self.attack_type == 'zero-gradient':
                     grad.append(item.grad * 0)
-                    # refer to collect_experience_for_training() to see attack
-                    
                 
+                elif self.attack_type == 'random-noise':
+                    rnd = (torch.rand(item.grad.shape, device = item.device) * 2 - 1) * (item.grad.max().data - item.grad.min().data) * 3
+                    grad.append(item.grad + rnd)
+                
+                elif self.attack_type == 'sign-flipping':
+                    grad.append(-2.5 * item.grad)
+                    
+                elif self.attack_type == 'reward-flipping':
+                    grad.append(item.grad)
+                    # refer to collect_experience_for_training() to see attack
+
                 elif self.attack_type == 'random-action':
                     grad.append(item.grad)
                     # refer to collect_experience_for_training() to see attack
-                    
-                elif self.attack_type == 'variance-attack':
-                    grad.append(item.grad)
-                    # refer to agent.py to see attack
                 
                 elif self.attack_type == 'random-reward':
                     grad.append(item.grad)
-                    # refer to agent.py to see attack
-
-                elif self.attack_type == 'random-noise':
-                    rnd = (torch.rand(item.grad.shape, device = item.device) * 2 - 1) * (item.grad.max().data - item.grad.min().data) * 3
-                    grad.append( item.grad + rnd)  
+                    # refer to collect_experience_for_training() to see attack
                 
-                elif self.attack_type == 'filtering-attack':
+                elif self.attack_type == 'FedScsPG-attack':
                     grad.append(item.grad)
-                    # refer to agent.py to see attack
-                
-                elif self.attack_type == 'filtering-attack-5':
-                    grad.append(item.grad)
-                    # refer to agent.py to see attack  
-                    
-                elif self.attack_type == 'filtering-attack-4':
-                    grad.append(item.grad)
-                    # refer to agent.py to see attack  
-                    
-                elif self.attack_type == 'filtering-attack-7':
-                    grad.append(item.grad)
-                    # refer to agent.py to see attack
-                    
-                elif self.attack_type == 'sign-flipping':
-                    grad.append(-2.5 * item.grad)
                     # refer to agent.py to see attack
                     
                 else: raise NotImplementedError()

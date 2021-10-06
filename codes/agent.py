@@ -1,5 +1,4 @@
 import os
-import io
 import numpy as np
 import torch
 import torch.optim as optim
@@ -19,9 +18,6 @@ class Memory:
         self.steps = {}
         self.eval_values = {}
         self.training_values = {}
-
-def calc_Z(total, bad):
-    return st.norm.ppf((total -  bad - (np.round(total/2 + 1) - bad)) / (total - bad))
 
 def euclidean_dist(x, y):
     """
@@ -114,7 +110,6 @@ class Agent:
             self.optimizer = optim.Adam(self.master.logits_net.parameters(), lr = opts.lr_model)
         
         self.pool = Pool(self.world_size)
-        
         self.memory = Memory()
     
     def load(self, load_path):
@@ -193,7 +188,7 @@ class Agent:
             # distribute current params and Batch_Size to all workers
             param = get_inner_model(self.master.logits_net).state_dict()
             
-            if opts.scsg:
+            if opts.FT_FedScsPG:
                 Batch_size = np.random.randint(opts.Bmin, opts.Bmax + 1)
             else:
                 Batch_size = opts.B
@@ -219,113 +214,30 @@ class Agent:
                 batch_lens.append(lens)
             
             
-            # simulate filtering-attack (if needed) on server for demo
-            if opts.attack_type == 'filtering-attack' and opts.num_Byzantine > 0:  
+            # simulate FedScsPG-attack (if needed) on server for demo
+            if opts.attack_type == 'FedScsPG-attack' and opts.num_Byzantine > 0:  
                 for idx,_ in enumerate(self.master.parameters()):
                     tmp = []
                     for bad_worker in range(opts.num_Byzantine):
                         tmp.append(gradient[bad_worker][idx].view(-1))
                     tmp = torch.stack(tmp)
 
-                    estimated_2V = euclidean_dist(tmp, tmp).max()
+                    estimated_2sigma = euclidean_dist(tmp, tmp).max()
                     estimated_mean = tmp.mean(0)
-
-                    # rnd = torch.rand(gradient[0][idx].shape) * estimated_2V
-              
-                    # should be
+                    
+                    # change the gradient to be estimated_mean + 3sigma (with a random direction rnd)
                     rnd = torch.rand(gradient[0][idx].shape) * 2. - 1.
                     rnd = rnd / rnd.norm()
-                    attacked_gradient = estimated_mean.view(gradient[bad_worker][idx].shape) + rnd * estimated_2V * 3. / 2.
-                    
-                    # end
-
+                    attacked_gradient = estimated_mean.view(gradient[bad_worker][idx].shape) + rnd * estimated_2sigma * 3. / 2.
                     for bad_worker in range(opts.num_Byzantine):
                         gradient[bad_worker][idx] = attacked_gradient
                         
-                    # simulate filtering-attack (if needed) on server for demo
-            elif opts.attack_type == 'filtering-attack-5' and opts.num_Byzantine > 0:  
-                for idx,_ in enumerate(self.master.parameters()):
-                    tmp = []
-                    for bad_worker in range(opts.num_Byzantine):
-                        tmp.append(gradient[bad_worker][idx].view(-1))
-                    tmp = torch.stack(tmp)
-
-                    estimated_2V = euclidean_dist(tmp, tmp).max()
-                    estimated_mean = tmp.mean(0)
-
-                    # rnd = torch.rand(gradient[0][idx].shape) * estimated_2V
-              
-                    # should be
-                    rnd = torch.rand(gradient[0][idx].shape) * 2. - 1.
-                    rnd = rnd / rnd.norm()
-                    attacked_gradient = estimated_mean.view(gradient[bad_worker][idx].shape) + rnd * estimated_2V * 5. / 2.
-                    
-                    # end
-
-                    for bad_worker in range(opts.num_Byzantine):
-                        gradient[bad_worker][idx] = attacked_gradient
-            
-            elif opts.attack_type == 'filtering-attack-4' and opts.num_Byzantine > 0:  
-                for idx,_ in enumerate(self.master.parameters()):
-                    tmp = []
-                    for bad_worker in range(opts.num_Byzantine):
-                        tmp.append(gradient[bad_worker][idx].view(-1))
-                    tmp = torch.stack(tmp)
-
-                    estimated_2V = euclidean_dist(tmp, tmp).max()
-                    estimated_mean = tmp.mean(0)
-
-                    # rnd = torch.rand(gradient[0][idx].shape) * estimated_2V
-              
-                    # should be
-                    rnd = torch.rand(gradient[0][idx].shape) * 2. - 1.
-                    rnd = rnd / rnd.norm()
-                    attacked_gradient = estimated_mean.view(gradient[bad_worker][idx].shape) + rnd * estimated_2V * 4. / 2.
-                    
-                    # end
-
-                    for bad_worker in range(opts.num_Byzantine):
-                        gradient[bad_worker][idx] = attacked_gradient
-
-            elif opts.attack_type == 'filtering-attack-7' and opts.num_Byzantine > 0:  
-                for idx,_ in enumerate(self.master.parameters()):
-                    tmp = []
-                    for bad_worker in range(opts.num_Byzantine):
-                        tmp.append(gradient[bad_worker][idx].view(-1))
-                    tmp = torch.stack(tmp)
-
-                    estimated_2V = euclidean_dist(tmp, tmp).max()
-                    estimated_mean = tmp.mean(0)
-
-                    # rnd = torch.rand(gradient[0][idx].shape) * estimated_2V
-              
-                    # should be
-                    rnd = torch.rand(gradient[0][idx].shape) * 2. - 1.
-                    rnd = rnd / rnd.norm()
-                    attacked_gradient = estimated_mean.view(gradient[bad_worker][idx].shape) + rnd * estimated_2V * 7. / 2.
-                    
-                    # end
-
-                    for bad_worker in range(opts.num_Byzantine):
-                        gradient[bad_worker][idx] = attacked_gradient
-
-            # simulate variance-attack (if needed) on server for demo
-            elif opts.attack_type == 'variance-attack' and opts.num_Byzantine > 0: 
-                for idx,_ in enumerate(self.master.parameters()):
-                    tmp = []
-                    for bad_worker in range(opts.num_Byzantine):
-                        tmp.append(gradient[bad_worker][idx].view(-1))
-                    tmp = torch.stack(tmp)
-              
-                    for bad_worker in range(opts.num_Byzantine):
-                        gradient[bad_worker][idx] = tmp.mean(0).view(gradient[0][idx].shape) - calc_Z(opts.num_worker, opts.num_Byzantine) * tmp.std(0).view(gradient[0][idx].shape)
-              
               
             # make the old policy as a copy of the current master node
             self.old_master.load_param_from_master(param)
             
-            # do filter step to detect Byzantine worker on master node if needed
-            if opts.with_filter:
+            # do Aggregate Algorithm to detect Byzantine worker on master node
+            if opts.FT_FedScsPG:
                 
                 # flatten the gradient vectors of each worker and put them together, shape [num_worker, -1]
                 mu_vec = None
@@ -345,67 +257,37 @@ class Agent:
                 # calculate the norm distance between each worker's gradient vector, shape [num_worker, num_worker]
                 dist = euclidean_dist(mu_vec, mu_vec)
                 
-                
                 # calculate C, Variance Bound V, thresold, and alpha
                 V = 2 * np.log(2 * opts.num_worker / opts.delta)
-                ########################################################3
-                # 8 feb try adaptive
-                # replace
-                # sigma = opts.sigma
-                # with
-                sigma = torch.mean(dist)
-                # end
-                ##########################
+                sigma = opts.sigma
+
                 threshold = 2 * sigma * np.sqrt(V / Batch_size)
                 alpha = opts.alpha
-            
-                print(f'dist:{torch.max(dist)}, \t threshold:{threshold}')
                 
-                # find the index of "compact" worker's gradient such that |dist <= threshold| > 0.5 * num_worker
+                # to find MOM: |dist <= threshold| > 0.5 * num_worker
                 mu_med_vec = None
                 k_prime = (dist <= threshold).sum(-1) > (0.5 * self.world_size)
                 
-                # computes the vector median of the gradients, mu_med_vec, and
+                # computes the mom of the gradients, mu_med_vec, and
                 # filter the gradients it believes to be Byzantine and store the index of non-Byzantine graidents in Good_set
                 if torch.sum(k_prime) > 0:
-                    
-                    if opts.old_filter:
-                        mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])].view(1,-1)
-                    # mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
-                    else:
-                        mu_mean_vec = torch.mean(mu_vec[k_prime],0).view(1,-1)
-                        mu_med_vec = mu_vec[k_prime][euclidean_dist(mu_mean_vec, mu_vec[k_prime]).argmin()].view(1,-1)
-                        assert mu_med_vec.view(1,-1).shape == mu_vec[0].view(1,-1).shape
-                    
-                    if opts.old_filter:
-                        Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 2 * threshold # !!!!!!!!!!!!!!!!!!!!!!!!!! 2 -> 1
-                    else:
-                        Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 1 * threshold # !!!!!!!!!!!!!!!!!!!!!!!!!! 2 -> 1
+                    mu_mean_vec = torch.mean(mu_vec[k_prime],0).view(1,-1)
+                    mu_med_vec = mu_vec[k_prime][euclidean_dist(mu_mean_vec, mu_vec[k_prime]).argmin()].view(1,-1)
+                    # applying R1 to filter
+                    Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 1 * threshold
                 else:
-                    Good_set = k_prime # if median vector can not be calculated, skip this step, k_prime is emplty (i.e., all False)
+                    Good_set = k_prime # skip this step if k_prime is emplty (i.e., all False)
                 
                 # avoid the scenarios that Good_set is empty or can have |Gt| < (1 − α)K.
                 if torch.sum(Good_set) < (1 - alpha) * self.world_size or torch.sum(Good_set) == 0:
-                    # re-calculate vector median of the gradients
-                    k_prime = (dist <= 2 * sigma).sum(-1) > (0.5 * self.world_size)
                     
+                    # re-calculate mom of the gradients
+                    k_prime = (dist <= 2 * sigma).sum(-1) > (0.5 * self.world_size)
                     if torch.sum(k_prime) > 0:
-                        # mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
-                        # mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])]
-                        
-                        if opts.old_filter:
-                            mu_med_vec = mu_vec[np.random.choice(np.where(k_prime.numpy() > 0)[0])].view(1,-1)
-                        # mu_med_vec = torch.median(mu_vec[k_prime],0)[0].view(1,-1)
-                        else:
-                            mu_mean_vec = torch.mean(mu_vec[k_prime],0).view(1,-1)
-                            mu_med_vec = mu_vec[k_prime][euclidean_dist(mu_mean_vec, mu_vec[k_prime]).argmin()].view(1,-1)
-                            assert mu_med_vec.view(1,-1).shape == mu_vec[0].view(1,-1).shape
-                            
-                        # re-filter with new vector median
-                        if opts.old_filter:
-                            Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 4 * sigma # !!!!!!!!!!!!!!!!!!!!!!!!!! 4 -> 2
-                        else:
-                            Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 2 * sigma # !!!!!!!!!!!!!!!!!!!!!!!!!! 4 -> 2
+                        mu_mean_vec = torch.mean(mu_vec[k_prime],0).view(1,-1)
+                        mu_med_vec = mu_vec[k_prime][euclidean_dist(mu_mean_vec, mu_vec[k_prime]).argmin()].view(1,-1)
+                        # re-filter with R2
+                        Good_set = euclidean_dist(mu_vec, mu_med_vec) <= 2 * sigma
                     else:
                         Good_set = torch.zeros(self.world_size,1).to(opts.device).bool()
             
@@ -425,22 +307,20 @@ class Agent:
                         if Good_set[i]: # only aggregate non-Byzantine gradients
                             grad_item.append(gradient[i][idx])
                     mu.append(torch.stack(grad_item).mean(0))
-            else: # if still all nodes are detected to be Byzantine, set mu to be None
+            else: # if still all nodes are detected to be Byzantine, check the sigma. If siagma is set properly, this situation will not happen.
                 mu = None
             
             # perform gradient update in master node
             grad_array = [] # store gradients for logging
-            
-            
-            # with svrg or graident descent
-            if opts.scsg or opts.svrg:
+
+            if opts.FT_FedScsPG or opts.SVRPG:
                 
-                if opts.scsg:
+                if opts.FT_FedScsPG:
                     # for n=1 to Nt ~ Geom(B/B+b) do grad update
                     b = opts.b
                     N_t = np.random.geometric(p= 1 - Batch_size/(Batch_size + b))
                     
-                elif opts.svrg:
+                elif opts.SVRPG:
                     b = opts.b
                     N_t = opts.N
                     
@@ -500,7 +380,7 @@ class Agent:
                     # take a gradient step
                     self.optimizer.step()
         
-            else:
+            else: # GOMDP in this case
                 
                 b = 0
                 N_t = 0
@@ -534,7 +414,7 @@ class Agent:
                 tb_logger.add_scalar(f'params/N_t_{run_id}', N_t, step)
 
                 # Byzantine filtering log
-                if opts.with_filter:
+                if opts.FT_FedScsPG:
                     
                     y_true = self.true_Byzantine
                     y_pred = (~ Good_set).view(-1).cpu().tolist()
@@ -588,7 +468,7 @@ class Agent:
         val_len = 0.0
         
         for _ in range(self.opts.val_size):
-            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, max_steps = max_steps, render = render, sample = False, mode = mode, save_dir = './outputs/', filename = f'gym_{run_id}_{_}')
+            epi_ret, epi_len, _ = self.master.rollout(self.opts.device, max_steps = max_steps, render = render, sample = False, mode = mode, save_dir = './outputs/', filename = f'gym_{run_id}_{_}.gif')
             val_ret += epi_ret
             val_len += epi_len
         
