@@ -4,13 +4,9 @@ This is the code for the FedPG-BR framework  presented in the paper:
 Flint Xiaofeng Fan, Yining Ma, Zhongxiang Dai, Wei Jing, Cheston Tan and Kian Hsiang Low. "[Fault-Tolerant Federated Reinforcement Learning with Theoretical Guarantee](https://arxiv.org/pdf/2110.14074.pdf)." *In 35th Conference on Neural Information Processing Systems (NeurIPS-21)*, Dec 6-14, 2021.
 
 
-The experiments in the paper was conducted on Ubuntu 18.04 with a 14 cores (28 threads) Intel(R) Core(TM) i9-10940X CPU @ 3.30GHz and 64G memory.
+The experiments in the paper were conducted on Ubuntu 18.04 with a 14 cores (28 threads) Intel(R) Core(TM) i9-10940X CPU @ 3.30GHz and 64G memory.
 
-The code following this instruction is also tested on Ubuntu 20.04 with ... note, for his setup, due to the CPU, you may run into the following issue like we had.. we solved this issue by following...
-
-
-Ubuntu 20.04
-
+We also tested on Ubuntu 20.04 with an 8 cores (16 threads) Intel(R) Core(TM) i9-11900K CPU @ 3.50GHz and 128G memory. Some extra steps may be necessary for this CPU which we gave details in installation.
 # Dependencies
 - Python 3.7 
 - Pytorch 1.5.0 
@@ -48,8 +44,9 @@ $ pip install -r requirements.txt
 
 ```
 
-If you run into issue of `Intel MKL FATAL ERROR: Cannot load libmkl_avx512.so or libmkl_def.so`, then follow this [solution](https://stackoverflow.com/questions/36659453/intel-mkl-fatal-error-cannot-load-libmkl-avx2-so-or-libmkl-def-so). It will reinstall certain packages for certain intel chips and also removes `pytorch` and `mujoco-py.` So you will want to reinstall `pytorch (1.5.0)` and `mujoco-py (1.50.1.68)`
+---
 
+For centain CPUs, if you run into issue of `Intel MKL FATAL ERROR: Cannot load libmkl_avx512.so or libmkl_def.so`, then follow this [solution](https://stackoverflow.com/questions/36659453/intel-mkl-fatal-error-cannot-load-libmkl-avx2-so-or-libmkl-def-so). It will reinstall certain packages for certain intel chips and also removes `pytorch` and `mujoco-py.` So you will want to reinstall `pytorch (1.5.0)` and `mujoco-py (1.50.1.68)`
 
 ---
 
