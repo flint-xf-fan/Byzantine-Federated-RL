@@ -50,7 +50,7 @@ def get_options(args=None):
     # RL Algorithms (default GOMDP)
     parser.add_argument('--SVRPG', action='store_true', 
                         help='run SVRPG')
-    parser.add_argument('--FT_FedScsPG', action='store_true', 
+    parser.add_argument('--FedPG_BR', action='store_true', 
                         help='run FT-FedScsPG')
 
     
@@ -170,7 +170,7 @@ def get_options(args=None):
         opts.delta = 0.6
         opts.sigma = 0.07
 
-    assert opts.SVRPG + opts.FT_FedScsPG <= 1
-    print('run GPMDP\n' if opts.SVRPG + opts.FT_FedScsPG == 0 else ('run FT-FedScsPG\n' if opts.FT_FedScsPG else 'run SVRPG\n'))
+    assert opts.SVRPG + opts.FedPG_BR <= 1
+    print('run GPMDP\n' if opts.SVRPG + opts.FedPG_BR == 0 else ('run FT-FedScsPG\n' if opts.FedPG_BR else 'run SVRPG\n'))
     
     return opts

@@ -55,7 +55,7 @@ If you run into issue of `Intel MKL FATAL ERROR: Cannot load libmkl_avx512.so or
 
 To check your installation, run
 ```
-$ python run.py --env_name HalfCheetah-v2 --FedPG-BR --num_worker 10 --num_Byzantine 0 --log_dir ./logs_HalfCheetah --multiple_run 10 --run_name HalfCheetah_FedPGBR_W10B0
+$ python run.py --env_name HalfCheetah-v2 --FedPG_BR --num_worker 10 --num_Byzantine 0 --log_dir ./logs_HalfCheetah --multiple_run 10 --run_name HalfCheetah_FedPGBR_W10B0
 
 ```
 
@@ -67,7 +67,7 @@ If terminal returns messages similar to those shown below, then your installatio
 # Usage
 To reproduce the results of FedPG-BR (K= 10) in Figure 1 for the HalfCheetah task, run the following command:
 ```
-$ python run.py --env_name HalfCheetah-v2 --FedPG-BR --num_worker 10 --num_Byzantine 0 --log_dir ./logs_HalfCheetah --multiple_run 10 --run_name HalfCheetah_FedPGBR_W10B0
+$ python run.py --env_name HalfCheetah-v2 --FedPG_BR --num_worker 10 --num_Byzantine 0 --log_dir ./logs_HalfCheetah --multiple_run 10 --run_name HalfCheetah_FedPGBR_W10B0
 
 ```
 If terminal returns messages similar to those shown below, then your installation is all good.
@@ -77,7 +77,7 @@ If terminal returns messages similar to those shown below, then your installatio
 
 To reproduce the results of FedPG-BR (K= 10B= 3) in Figure 2 where 3 Byzantine agents are Random Noise in theHalfCheetah task environment, run the following command:
 ```
-$ python run.py --env_name CartPole-v1 --FedPG_BR --num_worker 10--num_Byzantine 3 --attack_type random-noise--log_dir ./logs_Cartpole --multiple_run 10--run_name Cartpole_FedPGBR_W10B3
+$ python run.py --env_name CartPole-v1 --FedPG_BR --num_worker 10 --num_Byzantine 3 --attack_type random-noise --log_dir ./logs_Cartpole --multiple_run 10 --run_name Cartpole_FedPGBR_W10B3
 ```
 
 Replace `--FedPG_BR` with `--SVRPG` for the results of SVRPG in the same experiment. 
