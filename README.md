@@ -67,10 +67,6 @@ To reproduce the results of FedPG-BR (K= 10) in Figure 1 for the HalfCheetah tas
 $ python run.py --env_name HalfCheetah-v2 --FedPG_BR --num_worker 10 --num_Byzantine 0 --log_dir ./logs_HalfCheetah --multiple_run 10 --run_name HalfCheetah_FedPGBR_W10B0
 
 ```
-If terminal returns messages similar to those shown below, then your installation is all good.
-
-![log](training-log-sample.png)
-
 
 To reproduce the results of FedPG-BR (K= 10B= 3) in Figure 2 where 3 Byzantine agents are Random Noise in theHalfCheetah task environment, run the following command:
 ```
@@ -82,7 +78,9 @@ Replace `--FedPG_BR` with `--SVRPG` for the results of SVRPG in the same experim
 # Visualization
 
 ## Training stats
-All results including allstatistics will be logged into the directory indicated by‘--log_dir‘, which can be visualized in tensorboard by running tensorboard accordingly. You will be able to visualize different stats of each run there, e.g.,
+All results including allstatistics will be logged into the directory indicated by‘--log_dir‘, which can be visualized in tensorboard by running tensorboard accordingly, e.g., `tensorboard --logdir logs_Cartpole/ --host localhost --port 8008`
+
+You will be able to visualize different stats of each run there, e.g.,
 ![training-visual](training-plot-sample.png) 
 
 ## Rendering
