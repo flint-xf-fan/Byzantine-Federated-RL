@@ -76,20 +76,31 @@ If terminal returns messages similar to those shown below, then your installatio
 
 
 To reproduce the results of FedPG-BR (K= 10B= 3) in Figure 2 where 3 Byzantine agents are Random Noise in theHalfCheetah task environment, run the following command:
+```
+$ python run.py --env_name CartPole-v1 --FedPG_BR --num_worker 10--num_Byzantine 3 --attack_type random-noise--log_dir ./logs_Cartpole --multiple_run 10--run_name Cartpole_FedPGBR_W10B3
+```
+
+Replace `--FedPG_BR` with `--SVRPG` for the results of SVRPG in the same experiment. 
 
 # Visualization
-XXX
 
+## Training stats
+All results including allstatistics will be logged into the directory indicated by‘--log_dir‘, which can be visualized in tensorboard by running tensorboard accordingly. You will be able to visualize different stats of each run there, e.g.,
+![training-visual](training-plot-sample.png) 
 
-# Examples
-XXX
+## Rendering
+To visualize the behavior of the learnt policy, run the experiment in evaluation mode with rendering option on. For example:
+
+```
+$ python run.py --env_name CartPole-v1 --FedPG_BR --eval_only --render --load_path PATH_TO_THE_SAVED_POLICY_MODEL
+```
+
+### Demo
+See the video file `./FedPG-BR_demo_edited.mp4`
+<!-- ![demo](./FedPG-BR_demo_edited.mp4) -->
 
 # Acknowledgements
-XXX
+This research/project is supported by A*STAR under its RIE$2020$ Advanced Manufacturing and Engineering (AME) Industry Alignment Fund – Pre Positioning (IAF-PP) (Award A$19$E$4$a$0101$) and its A*STAR Computing and Information Science Scholarship (ACIS) awarded to Flint Xiaofeng Fan. Wei Jing is supported by Alibaba Innovative Research (AIR) Program.
 
 
 
-Errors:
-Intel MKL FATAL ERROR: Cannot load libmkl_avx512.so or libmkl_def.so.
-
-https://stackoverflow.com/questions/36659453/intel-mkl-fatal-error-cannot-load-libmkl-avx2-so-or-libmkl-def-so
