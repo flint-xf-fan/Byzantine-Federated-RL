@@ -7,6 +7,9 @@ Flint Xiaofeng Fan, Yining Ma, Zhongxiang Dai, Wei Jing, Cheston Tan and Kian Hs
 The experiments in the paper were conducted on Ubuntu 18.04 with a 14 cores (28 threads) Intel(R) Core(TM) i9-10940X CPU @ 3.30GHz and 64G memory.
 
 We also tested on Ubuntu 20.04 with an 8 cores (16 threads) Intel(R) Core(TM) i9-11900K CPU @ 3.50GHz and 128G memory. Some extra steps may be necessary for this CPU which we gave details in installation.
+
+Note: the use of GPU for training is *not* necessary since each local agent is not heavily parameterized. We included options for GPU training, however, we did not test training on GPU in this public release.
+
 # Dependencies
 - Python 3.7 
 - Pytorch 1.5.0 
