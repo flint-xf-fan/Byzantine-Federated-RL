@@ -1,3 +1,14 @@
+## ⚠️ note ⚠️
+We plan to prepare an anaconda env file with updated list of packages, or a docker image, in a week or two. Stay tuned!
+
+## TODO
+⬜ anaconda env file with updated list of packages
+
+⬜ docker image (optional)
+
+⬜ update this README page
+
+
 # Federated Policy Gradient with Byzantine Resilience (FedPG-BR)
 This is the code for the FedPG-BR framework  presented in the paper: 
 
