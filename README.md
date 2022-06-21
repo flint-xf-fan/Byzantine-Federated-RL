@@ -11,7 +11,8 @@ Table of Contents
 =================
 
    * [TLDR](#TLDR)
-   * [Technical Contributions](#technical-contributions)
+   * [Technical aspects](#Technical-aspects-in-summary)
+   * [Results](#results)
    * [Dependencies](#dependencies)
    * [Installation](#Installation)
    * [Visualization](#Visualization)
@@ -30,15 +31,34 @@ This paper provides the theoretical ground to study the **sample efficiency** of
 - how does this improvement correlates with the number of participating agents?
 - what happens if some agents turn into faulty agents (ie., Byzantine agents)?
 
-# Technical contributions
+# Technical aspects in summary
+## Federated Policy Gradient with SCSG optimization
 - Federated version of policy gradient running SCSG (Stochastically Controlled Stochastic Gradient, see the [scsg paper](https://proceedings.neurips.cc/paper/2017/file/81ca0262c82e712e50c580c032d99b60-Paper.pdf)) optimization
-  - SCSG enables a refined control over the PG estimation variance
-- a gradient-based probabilistic Byzantine-filter to remove or reduce the effects of Byzantine agents
-  - its empirical success in the RL problems relies on variance-reduced estimation of the policy gradient
+- SCSG enables a refined control over the PG estimation variance
+## Simulations of Byzantine baviours in distributed/federated RL systems
+- to capture the fault-tolerance aspects in Federated RL systems, we consider the most strigent fault formalism -- **Byzantine faults** which considers a small fraction of agents may behave arbitrarily and possibly adversarially, with the goal of breaking or at least slowing down the convergence of the system
+- we implemented three types of Byzantine behaviours of the system in our simulation
+  - Random Noise (RN): each Byzantine agent sends a random vector to the server
+  - Random Action (RA): every
+Byzantine agent ignores the policy from the server and takes actions randomly, which is used to simulate random system failures (e.g., hardware failures) and results in false gradient computations
+since the trajectories are no longer sampled according to the policy
+  - Sign Filpping (SF): each
+Byzantine agent computes the correct gradient but sends the scaled negative gradient, which is used to simulate adversarial attacks aiming to manipulate the direction of policy
+update at the server
+## Byzantine filtering in RL
+- a gradient-based probabilistic Byzantine-filter to remove or reduce the effects of Byzantine agents showing above Byzantine behaviours
+- and, it does not slow down the system when no Byzantine agent is present
+
 
 
 
 <!-- :warning: as the objective of this work is to the use of GPU for training is *not* necessary since each local agent is not heavily parameterized. We included options for GPU training, however, we did not test training on GPU in this public release. -->
+
+# Results
+## Performance in ideal systems with no Byzantine agents
+![exp1](exp1.jpg)
+## Performance in practical systems with different Byzantine agents
+![exp2](exp2.jpg)
 
 # Dependencies
 
