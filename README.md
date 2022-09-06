@@ -12,6 +12,7 @@ Table of Contents
 
    * [TLDR](#TLDR)
    * [Technical aspects](#Technical-aspects-in-summary)
+   * [Theorems](#theorems)
    * [Results](#results)
    * [Dependencies](#dependencies)
    * [Installation](#Installation)
@@ -53,6 +54,9 @@ update at the server
 
 
 <!-- :warning: as the objective of this work is to the use of GPU for training is *not* necessary since each local agent is not heavily parameterized. We included options for GPU training, however, we did not test training on GPU in this public release. -->
+# Theorems
+A comparison of the sample complexitities of related works.
+![sample-complexities](sample-complexities.jpg)
 
 # Results
 ## Performance in ideal systems with no Byzantine agents
