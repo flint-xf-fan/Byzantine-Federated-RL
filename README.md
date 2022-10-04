@@ -73,7 +73,7 @@ A comparison of the sample complexitities of related works.
 - tqdm 
 - sklearn 
 - matplotlib 
-- OpenAI Gym 0.24.3 (tested on 4/10/2022; there were quite some changes in newer versions of gym)
+- :warning:OpenAI Gym 0.24.1 (tested on 4/10/2022; there were quite some changes in newer versions of gym)
 - Box2d [for running experiments on LunarLander environment] 
 - mujoco150
 - mujoco-py 1.50.1.68 [for running experiments on HalfCheetah environment]
