@@ -3,4 +3,4 @@ tqdm
 sklearn
 matplotlib
 Box2d
-gym[all]
+gym[all]==0.24.1
