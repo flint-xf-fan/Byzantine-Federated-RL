@@ -182,7 +182,9 @@ url={https://openreview.net/forum?id=ospGnpuf6L}
 ```
 
 # FedRLHF
-Check out our latest work on applying FedRL with RLHF to personalize LLMs training.
+Check out our latest work on applying FedRL with RLHF to personalize LLMs training:
+[![FedRLHF](FedRLHF-problem.png)](FedRLHF-problem.pdf)
+
 
 - Github Repo: [AAMAS 2025 - FedRLHF](https://github.com/flint-xf-fan/FedRLHF)
 - Preprint on arxiv: [AAMAS 2025 - FedRLHF](https://arxiv.org/abs/2412.15538)
