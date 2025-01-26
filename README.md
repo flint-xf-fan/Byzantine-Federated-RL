@@ -186,5 +186,5 @@ Check out our latest work on applying FedRL with RLHF to personalize LLMs traini
 [![FedRLHF](FedRLHF-problem.png)](FedRLHF-problem.pdf)
 
 
-- Github Repo: [AAMAS 2025 - FedRLHF](https://github.com/flint-xf-fan/FedRLHF)
+- Github Repo: [AAMAS 2025 - FedRLHF](https://github.com/flint-xf-fan/Federated-RLHF)
 - Preprint on arxiv: [AAMAS 2025 - FedRLHF](https://arxiv.org/abs/2412.15538)
