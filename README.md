@@ -1,4 +1,6 @@
 # Federated Policy Gradient with Byzantine Resilience (FedPG-BR)
+[![NeurIPS 2021](https://img.shields.io/badge/NeurIPS-2021-blue)](https://neurips.cc/Conferences/2021)  
+
 This is the code for the FedPG-BR framework  presented in the paper: 
 
 Flint Xiaofeng Fan, Yining Ma, Zhongxiang Dai, Wei Jing, Cheston Tan and Kian Hsiang Low. "[Fault-Tolerant Federated Reinforcement Learning with Theoretical Guarantee](https://arxiv.org/pdf/2110.14074.pdf)." *In 35th Conference on Neural Information Processing Systems (NeurIPS-21)*, Dec 6-14, 2021.
