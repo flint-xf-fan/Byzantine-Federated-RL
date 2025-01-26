@@ -22,6 +22,7 @@ Table of Contents
       * [Demo](#demo)
    * [Acknowledgements](#acknowledgements)
    * [Cite](#cite)
+   * [FedRLHF](#fedrlhf)
 
 ---
 
@@ -180,3 +181,8 @@ url={https://openreview.net/forum?id=ospGnpuf6L}
 }
 ```
 
+# FedRLHF
+Check out our latest work on applying FedRL with RLHF to personalize LLMs training.
+
+- Github Repo: [AAMAS 2025 - FedRLHF](https://github.com/flint-xf-fan/FedRLHF)
+- Preprint on arxiv: [AAMAS 2025 - FedRLHF](https://arxiv.org/abs/2412.15538)
