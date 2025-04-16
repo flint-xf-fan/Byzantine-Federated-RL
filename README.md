@@ -1,4 +1,5 @@
 # Federated Policy Gradient with Byzantine Resilience (FedPG-BR)
+[![GitHub Repo stars](https://img.shields.io/github/stars/flint-xf-fan/Byzantine-Federated-RL?style=social)](https://github.com/flint-xf-fan/Byzantine-Federated-RL)
 [![NeurIPS 2021](https://img.shields.io/badge/NeurIPS-2021-blue)](https://neurips.cc/Conferences/2021)  
 
 This is the code for the FedPG-BR framework  presented in the paper: 
